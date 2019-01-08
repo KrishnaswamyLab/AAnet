@@ -275,3 +275,11 @@ class AAnet(object):
     def compute_mse_loss(self, data):
         return self.sess.run(self.mse_loss, feed_dict={self.x: data})
 
+    def pcasvd(self, X, k):
+        X_mu = np.mean(X, keepdims=True, axis=0)
+        X = X - X_mu
+        [U,_,_] = np.linalg.svd(X.T)
+        U = U[:,:k]
+        Y = X @ U;
+        return (Y, X_mu, U)
+
