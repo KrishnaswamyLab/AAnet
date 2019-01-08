@@ -90,7 +90,7 @@ class AAnet(object):
         at_recon = self.sess.run(self.x__, feed_dict={self.z: Z_at_m11})
         return at_recon
 
-    def plot_at_mds(self, data):
+    def plot_at_mds(self, data, c=None):
         Z_at = np.eye(self.num_at)
         Z_at_m11 = (Z_at * 2) - 1
         Z_at_m11 = Z_at_m11[:,:-1]
@@ -102,7 +102,7 @@ class AAnet(object):
         nbrs = NearestNeighbors(n_neighbors=3).fit(Y_mds)
         _, indices = nbrs.kneighbors(Y_mds)
         fig = plt.figure(figsize=(8, 6))
-        plt.scatter(Y_mds_z[:,0], Y_mds_z[:,1], s=1, alpha=0.5)
+        plt.scatter(Y_mds_z[:,0], Y_mds_z[:,1], s=1, alpha=0.5, c=c)
         for i in range(indices.shape[0]):
             plt.plot(Y_mds[indices[i,[0,1]],0], Y_mds[indices[i,[0,1]],1], 'grey', linewidth=0.5)
             plt.plot(Y_mds[indices[i,[0,2]],0], Y_mds[indices[i,[0,2]],1], 'grey', linewidth=0.5)
@@ -110,7 +110,7 @@ class AAnet(object):
         for i in range(Y_mds.shape[0]):
             plt.text(Y_mds[i,0], Y_mds[i,1], i+1, horizontalalignment='center', verticalalignment='center', fontdict={'color': 'white','size':10,'weight':'bold'}, zorder=4)
 
-    def plot_pca_data_ats(self, data):
+    def plot_pca_data_ats(self, data, c=None):
         pca = PCA(n_components=2)
         Z_at = np.eye(self.num_at)
         Z_at_m11 = (Z_at * 2) - 1
@@ -119,12 +119,12 @@ class AAnet(object):
         Y_pca_z = pca.fit_transform(data)
         Y_pca = pca.transform(at_recon)
         fig = plt.figure(figsize=(8, 6))
-        plt.scatter(Y_pca_z[:,0], Y_pca_z[:,1], s=1, alpha=0.5)
+        plt.scatter(Y_pca_z[:,0], Y_pca_z[:,1], s=1, alpha=0.5, c=c)
         plt.scatter(Y_pca[:,0], Y_pca[:,1], s=200, c='r')
         for i in range(Y_pca.shape[0]):
             plt.text(Y_pca[i,0], Y_pca[i,1], i+1, horizontalalignment='center', verticalalignment='center', fontdict={'color': 'white','size':10,'weight':'bold'})
 
-    def plot_pca_ats_data(self, data):
+    def plot_pca_ats_data(self, data, c=None):
         pca = PCA(n_components=2)
         Z_at = np.eye(self.num_at)
         Z_at_m11 = (Z_at * 2) - 1
@@ -133,12 +133,12 @@ class AAnet(object):
         Y_pca = pca.fit_transform(at_recon)
         Y_pca_z = pca.transform(data)
         fig = plt.figure(figsize=(8, 6))
-        plt.scatter(Y_pca_z[:,0], Y_pca_z[:,1], s=1, alpha=0.5)
+        plt.scatter(Y_pca_z[:,0], Y_pca_z[:,1], s=1, alpha=0.5, c=c)
         plt.scatter(Y_pca[:,0], Y_pca[:,1], s=200, c='r')
         for i in range(Y_pca.shape[0]):
             plt.text(Y_pca[i,0], Y_pca[i,1], i+1, horizontalalignment='center', verticalalignment='center', fontdict={'color': 'white','size':10,'weight':'bold'})
 
-    def plot_pca_data_recon_ats(self, data):
+    def plot_pca_data_recon_ats(self, data, c=None):
         pca = PCA(n_components=2)
         Z_at = np.eye(self.num_at)
         Z_at_m11 = (Z_at * 2) - 1
@@ -148,12 +148,12 @@ class AAnet(object):
         Y_pca_z = pca.fit_transform(data_recon)
         Y_pca = pca.transform(at_recon)
         fig = plt.figure(figsize=(8, 6))
-        plt.scatter(Y_pca_z[:,0], Y_pca_z[:,1], s=1, alpha=0.5)
+        plt.scatter(Y_pca_z[:,0], Y_pca_z[:,1], s=1, alpha=0.5, c=c)
         plt.scatter(Y_pca[:,0], Y_pca[:,1], s=200, c='r')
         for i in range(Y_pca.shape[0]):
             plt.text(Y_pca[i,0], Y_pca[i,1], i+1, horizontalalignment='center', verticalalignment='center', fontdict={'color': 'white','size':10,'weight':'bold'})
 
-    def plot_pca_ats_data_recon(self, data):
+    def plot_pca_ats_data_recon(self, data, c=None):
         pca = PCA(n_components=2)
         Z_at = np.eye(self.num_at)
         Z_at_m11 = (Z_at * 2) - 1
@@ -163,24 +163,24 @@ class AAnet(object):
         Y_pca = pca.fit_transform(at_recon)
         Y_pca_z = pca.transform(data_recon)
         fig = plt.figure(figsize=(8, 6))
-        plt.scatter(Y_pca_z[:,0], Y_pca_z[:,1], s=1, alpha=0.5)
+        plt.scatter(Y_pca_z[:,0], Y_pca_z[:,1], s=1, alpha=0.5, c=c)
         plt.scatter(Y_pca[:,0], Y_pca[:,1], s=200, c='r')
         for i in range(Y_pca.shape[0]):
             plt.text(Y_pca[i,0], Y_pca[i,1], i+1, horizontalalignment='center', verticalalignment='center', fontdict={'color': 'white','size':10,'weight':'bold'})
 
-    def plot_at_pca_single(self, data):
+    def plot_at_pca_single(self, data, c=None):
         pca = PCA(n_components=2)
         Z_at = np.eye(self.num_at)
         samples_Z = self.sess.run(self.z_01_full, feed_dict={self.x: data})
         Y_pca_z = pca.fit_transform(samples_Z)
         Y_pca = pca.transform(Z_at)
         fig = plt.figure(figsize=(8, 6))
-        plt.scatter(Y_pca_z[:,0], Y_pca_z[:,1], s=1, alpha=0.5)
+        plt.scatter(Y_pca_z[:,0], Y_pca_z[:,1], s=1, alpha=0.5, c=c)
         plt.scatter(Y_pca[:,0], Y_pca[:,1], s=200, c='r')
         for i in range(Y_pca.shape[0]):
             plt.text(Y_pca[i,0], Y_pca[i,1], i+1, horizontalalignment='center', verticalalignment='center', fontdict={'color': 'white','size':10,'weight':'bold'})
 
-    def plot_at(self, data, n_plot=None):
+    def plot_at(self, data, n_plot=None, c=None):
         if n_plot == None:
             n_plot = self.num_at
         Z_at = np.eye(self.num_at)
@@ -188,10 +188,10 @@ class AAnet(object):
         f, axarr = plt.subplots(n_plot, n_plot, figsize=(4*n_plot, 3*n_plot))
         for i in range(n_plot):
             for j in range(n_plot):   
-                axarr[i, j].scatter(samples_Z[:,i], samples_Z[:,j], s=1, alpha=0.5)
+                axarr[i, j].scatter(samples_Z[:,i], samples_Z[:,j], s=1, alpha=0.5, c=c)
                 axarr[i, j].scatter(Z_at[:,i], Z_at[:,j], s=20, c='r')
 
-    def plot_at_pca(self, data, n_plot=None):
+    def plot_at_pca(self, data, n_plot=None, c=None):
         if n_plot == None:
             n_plot = self.num_at
         Z_at = np.eye(self.num_at)
@@ -202,7 +202,7 @@ class AAnet(object):
         f, axarr = plt.subplots(n_plot, n_plot, figsize=(4*n_plot, 3*n_plot))
         for i in range(n_plot):
             for j in range(n_plot):   
-                axarr[i, j].scatter(Y[:,i], Y[:,j], s=1, alpha=0.5)
+                axarr[i, j].scatter(Y[:,i], Y[:,j], s=.5, alpha=0.5, c=c)
                 axarr[i, j].scatter(Y_at[:,i], Y_at[:,j], s=20, c='r')
 
 
@@ -224,6 +224,14 @@ class AAnet(object):
         x = e / np.sum(e, axis=1, keepdims=True)
         return x
 
+    def sample_boundary_uniform(self, n):
+        x_all = []
+        for i in range(num_at):
+            x = self.sample_at_uniform(self.num_at-1, n)
+            x = np.insert(x, i, 0, axis=1)
+            x_all.append(x)
+        return np.concatenate(x_all, axis=0)
+
     def sample_z_uniform(self, n):
         z = self.sample_at_uniform(n)
         z = (z * 2) - 1
@@ -240,7 +248,7 @@ class AAnet(object):
     def close_sess(self):
         self.sess.close()
 
-    def train(self, data, batch_size=128, num_batches=20000, verbose=True):
+    def train(self, data, batch_size=128, num_batches=20000, verbose=True, min_loss=0):
         start_time = time.time()
         # todo: per epoch
         for t in range(0, num_batches):
@@ -248,15 +256,18 @@ class AAnet(object):
             self.sess.run(self.ae_adam, feed_dict={self.x: bx, self.is_training: 1})
 
             if verbose and (t % 500 == 0 or t+1 == num_batches):
-                bx = self.sample_x(data, batch_size)
+                bx = self.sample_x(data, np.min([data.shape[0],batch_size*10]))
                 loss = self.sess.run(
                     self.loss, feed_dict={self.x: bx}
                 )
+                #loss = self.compute_loss(data)
                 print('Iter [%8d] Time [%5.4f] loss [%.4f]' %
                             (t, time.time() - start_time, loss))
+                if loss < min_loss:
+                    break
 
-            if verbose and t == num_batches-1:
-                print('done.')
+        if verbose:
+            print('done.')
 
     def compute_loss(self, data):
         return self.sess.run(self.loss, feed_dict={self.x: data})
