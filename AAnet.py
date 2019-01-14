@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 
 class AAnet(object):
-    def __init__(self, enc_net, dec_net, gamma_mse=1.0, gamma_nn=1.0, gamma_convex=1.0, learning_rate=1e-3, rseed=42):
+    def __init__(self, enc_net, dec_net, gamma_mse=1.0, gamma_nn=1.0, gamma_convex=1.0, learning_rate=1e-3, rseed=42, c_dim=0):
 
         tf.reset_default_graph()
 
@@ -20,19 +20,25 @@ class AAnet(object):
         self.num_at = self.enc_net.num_at
         self.x_dim = self.dec_net.x_dim
         self.z_dim = self.num_at-1
+        # self.c_dim = c_dim
         self.learning_rate = learning_rate
         self.rseed = rseed
         self.is_training = tf.keras.backend.learning_phase()
 
         # tensors
         self.x = tf.placeholder(tf.float32, [None, self.x_dim], name='x')
+        # self.c = tf.placeholder(tf.float32, [None, self.c_dim], name='c')
         self.z = tf.placeholder(tf.float32, [None, self.z_dim], name='z')
+        # self.zc = tf.concat([self.z, self.c], axis=1) # add condition
 
         # network
         self.z_ = self.enc_net(self.x, reuse=False) # encoder
+        # self.z_c = tf.concat([self.z_, self.c], axis=1) # add condition
+        # self.x_ = self.dec_net(self.z_c, reuse=False) # decoder
         self.x_ = self.dec_net(self.z_, reuse=False) # decoder
         self.z_01 = (self.z_ + 1) / 2
         self.z_01_full = tf.concat([self.z_01, tf.reshape(1-tf.reduce_sum(self.z_01, axis=1), (-1,1))], 1) # add virtual archetype
+        # self.x__ = self.dec_net(self.zc) # decoding from z
         self.x__ = self.dec_net(self.z) # decoding from z
 
         # loss
@@ -64,51 +70,50 @@ class AAnet(object):
 
     def sample_x(self, data, n):
         idx = np.random.randint(data.shape[0], size=n)
-        return data[idx,:]
+        return data[idx,:], idx
 
     def data2at(self, data):
         return self.sess.run(self.z_01_full, feed_dict={self.x: data})
 
     def data2z(self, data):
+        data = data[:,1:]
         return self.sess.run(self.z_, feed_dict={self.x: data})
 
-    def z2data(self, z):
+    def z2data(self, z, cond=None):
+        # if cond==None:
+        #     cvec = np.zeros([z.shape[0],self.c_dim])
+        #     cvec = cvec - 1
+        #     cvec[:,0] = 1
+        # else:
+        #     cvec = cond
         return self.sess.run(self.x__, feed_dict={self.z: z})
 
-    def at2data(self, z):
+    def at2data(self, z, cond=None):
         z = (z * 2) - 1
         z = z[:,:-1]
-        return self.z2data(z)
+        return self.z2data(z, cond=cond)
 
     def get_ats(self):
         return np.eye(self.num_at)
 
-    def get_ats_x(self):
-        Z_at = self.get_ats()
-        Z_at_m11 = (Z_at * 2) - 1
-        Z_at_m11 = Z_at_m11[:,:-1]
-        at_recon = self.sess.run(self.x__, feed_dict={self.z: Z_at_m11})
-        return at_recon
+    def get_ats_x(self, cond=None):
+        return self.at2data(self.get_ats(), cond=cond)
 
     def plot_at_mds(self, data, c=None):
-        Z_at = np.eye(self.num_at)
-        Z_at_m11 = (Z_at * 2) - 1
-        Z_at_m11 = Z_at_m11[:,:-1]
-        at_recon = self.sess.run(self.x__, feed_dict={self.z: Z_at_m11})
-        samples_Z = self.sess.run(self.z_01_full, feed_dict={self.x: data})
-        mds = MDS(n_components=2)
-        Y_mds = mds.fit_transform(at_recon)
-        Y_mds_z = samples_Z @ Y_mds
-        nbrs = NearestNeighbors(n_neighbors=3).fit(Y_mds)
-        _, indices = nbrs.kneighbors(Y_mds)
+        data_at = self.data2at(data)
+        embedding = MDS(n_components=2)
+        Y_mds_ats = embedding.fit_transform(self.get_ats_x())
+        Y_mds_data = data_at @ Y_mds_ats
+        nbrs = NearestNeighbors(n_neighbors=3).fit(Y_mds_ats)
+        _, indices = nbrs.kneighbors(Y_mds_ats)
         fig = plt.figure(figsize=(8, 6))
-        plt.scatter(Y_mds_z[:,0], Y_mds_z[:,1], s=1, alpha=0.5, c=c)
+        plt.scatter(Y_mds_data[:,0], Y_mds_data[:,1], s=1, alpha=0.5, c=c)
         for i in range(indices.shape[0]):
-            plt.plot(Y_mds[indices[i,[0,1]],0], Y_mds[indices[i,[0,1]],1], 'grey', linewidth=0.5)
-            plt.plot(Y_mds[indices[i,[0,2]],0], Y_mds[indices[i,[0,2]],1], 'grey', linewidth=0.5)
-        plt.scatter(Y_mds[:,0], Y_mds[:,1], s=200, c='r', zorder=3)
-        for i in range(Y_mds.shape[0]):
-            plt.text(Y_mds[i,0], Y_mds[i,1], i+1, horizontalalignment='center', verticalalignment='center', fontdict={'color': 'white','size':10,'weight':'bold'}, zorder=4)
+            plt.plot(Y_mds_ats[indices[i,[0,1]],0], Y_mds_ats[indices[i,[0,1]],1], 'grey', linewidth=0.5)
+            plt.plot(Y_mds_ats[indices[i,[0,2]],0], Y_mds_ats[indices[i,[0,2]],1], 'grey', linewidth=0.5)
+        plt.scatter(Y_mds_ats[:,0], Y_mds_ats[:,1], s=200, c='r', zorder=3)
+        for i in range(Y_mds_ats.shape[0]):
+            plt.text(Y_mds_ats[i,0], Y_mds_ats[i,1], i+1, horizontalalignment='center', verticalalignment='center', fontdict={'color': 'white','size':10,'weight':'bold'}, zorder=4)
 
     def plot_pca_data_ats(self, data, c=None):
         pca = PCA(n_components=2)
@@ -124,11 +129,17 @@ class AAnet(object):
         for i in range(Y_pca.shape[0]):
             plt.text(Y_pca[i,0], Y_pca[i,1], i+1, horizontalalignment='center', verticalalignment='center', fontdict={'color': 'white','size':10,'weight':'bold'})
 
-    def plot_pca_ats_data(self, data, c=None):
+    def plot_pca_ats_data(self, data, c=None, cond=None):
         pca = PCA(n_components=2)
         Z_at = np.eye(self.num_at)
         Z_at_m11 = (Z_at * 2) - 1
         Z_at_m11 = Z_at_m11[:,:-1]
+        # if cond is None:
+        #     cvec = np.zeros([Z_at_m11.shape[0],self.c_dim])
+        #     cvec = cvec - 1
+        #     cvec[:,0] = 1
+        # else:
+        #     cvec = cond
         at_recon = self.sess.run(self.x__, feed_dict={self.z: Z_at_m11})
         Y_pca = pca.fit_transform(at_recon)
         Y_pca_z = pca.transform(data)
@@ -248,15 +259,28 @@ class AAnet(object):
     def close_sess(self):
         self.sess.close()
 
-    def train(self, data, batch_size=128, num_batches=20000, verbose=True, min_loss=0):
+    def train(self, data, batch_size=128, num_batches=20000, verbose=True, min_loss=0, cond=None):
         start_time = time.time()
+
         # todo: per epoch
         for t in range(0, num_batches):
-            bx = self.sample_x(data, batch_size)
+            bx, idx = self.sample_x(data, batch_size)
+            # if cond is None:
+            #     bc = np.zeros([bx.shape[0],self.c_dim])
+            #     bc = bc - 1
+            #     bc[:,0] = 1
+            # else:
+            #     bc = cond[idx,:]
             self.sess.run(self.ae_adam, feed_dict={self.x: bx, self.is_training: 1})
 
             if verbose and (t % 500 == 0 or t+1 == num_batches):
-                bx = self.sample_x(data, np.min([data.shape[0],batch_size*10]))
+                bx, idx = self.sample_x(data, np.min([data.shape[0],batch_size*10]))
+                # if cond is None:
+                #     bc = np.zeros([bx.shape[0],self.c_dim])
+                #     bc = bc - 1
+                #     bc[:,0] = 1
+                # else:
+                #     bc = cond[idx,:]
                 loss = self.sess.run(
                     self.loss, feed_dict={self.x: bx}
                 )
@@ -269,7 +293,13 @@ class AAnet(object):
         if verbose:
             print('done.')
 
-    def compute_loss(self, data):
+    def compute_loss(self, data, cond=None):
+        # if cond==None:
+        #     c = np.zeros([data.shape[0],self.c_dim])
+        #     c = c - 1
+        #     c[:,0] = 1
+        # else:
+        #     c = cond
         return self.sess.run(self.loss, feed_dict={self.x: data})
 
     def compute_mse_loss(self, data):
@@ -278,8 +308,9 @@ class AAnet(object):
     def pcasvd(self, X, k):
         X_mu = np.mean(X, keepdims=True, axis=0)
         X = X - X_mu
-        [U,_,_] = np.linalg.svd(X.T)
+        [U,S,_] = np.linalg.svd(X.T)
         U = U[:,:k]
+        S = S[:k]
         Y = X @ U;
-        return (Y, X_mu, U)
+        return (Y, X_mu, U, S)
 

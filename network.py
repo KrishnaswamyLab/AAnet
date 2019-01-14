@@ -7,11 +7,12 @@ def bn(x, name=None):
     return tf.layers.batch_normalization(x, training=tf.keras.backend.learning_phase(), momentum=.9, scale=True, fused=True, name=name)
 
 class Encoder(object):
-    def __init__(self, num_at, z_dim=[256,64]):
+    def __init__(self, num_at, z_dim=[256,64], act_at=None):
         self.z_dim = z_dim
         self.num_at = num_at
         self.name = 'ae/enc_net'
         self.layers_dim = self.z_dim + [self.num_at-1]
+        self.act_at = act_at
 
     def __call__(self, x, reuse=True):
         with tf.variable_scope(self.name) as vs:
@@ -20,7 +21,7 @@ class Encoder(object):
             fc = x
             for idx,out_dim in enumerate(self.layers_dim):
                 if idx == len(self.layers_dim)-1:
-                    act_fun = None
+                    act_fun = self.act_at
                 else:
                     act_fun = tf.nn.leaky_relu
                 fc = layers.dense(
@@ -35,25 +36,28 @@ class Encoder(object):
         return [var for var in tf.global_variables() if self.name in var.name]
 
 class Decoder(object):
-    def __init__(self, x_dim, noise_z_std=0.0, z_dim=[256,64], act_out=tf.nn.tanh):
+    def __init__(self, x_dim, noise_z_std=0.0, z_dim=[256,64], act_out=tf.nn.tanh, act_at=None):
         self.x_dim = x_dim
         self.z_dim = z_dim
         self.name = 'ae/dec_net'
         self.noise_z_std = noise_z_std
         self.layers_dim = self.z_dim[::-1] + [x_dim]
         self.act_out = act_out
+        self.act_at = act_at
 
-    def __call__(self, z, reuse=True):
+    def __call__(self, z, reuse=True, c=None):
         with tf.variable_scope(self.name) as vs:
             if reuse:
                 vs.reuse_variables()
             fc = z
             fc = tf.keras.layers.GaussianNoise(self.noise_z_std)(fc)
+            if c != None:
+                fc = tf.concat([fc, z], axis=1)
             for idx,out_dim in enumerate(self.layers_dim):
                 if idx == len(self.layers_dim)-1:
                     act_fun = self.act_out
                 elif idx == 0:
-                    act_fun = None
+                    act_fun = self.act_at
                 else:
                     act_fun = tf.nn.leaky_relu
                 fc = layers.dense(
