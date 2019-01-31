@@ -95,14 +95,15 @@ class AAnet(object):
         Y_mds_data = data_at @ Y_mds_ats
         nbrs = NearestNeighbors(n_neighbors=3).fit(Y_mds_ats)
         _, indices = nbrs.kneighbors(Y_mds_ats)
-        fig = plt.figure(figsize=(8, 6))
-        plt.scatter(Y_mds_data[:,0], Y_mds_data[:,1], s=1, alpha=0.5, c=c)
-        for i in range(indices.shape[0]):
-            plt.plot(Y_mds_ats[indices[i,[0,1]],0], Y_mds_ats[indices[i,[0,1]],1], 'grey', linewidth=0.5)
-            plt.plot(Y_mds_ats[indices[i,[0,2]],0], Y_mds_ats[indices[i,[0,2]],1], 'grey', linewidth=0.5)
-        plt.scatter(Y_mds_ats[:,0], Y_mds_ats[:,1], s=200, c='r', zorder=3)
+        fig, ax = plt.subplots(1, figsize=(8,6))
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_xlabel('MDS1')
+        ax.set_ylabel('MDS2')
+        ax.scatter(Y_mds_data[:,0], Y_mds_data[:,1], s=1, alpha=0.5, c=c)
+        ax.scatter(Y_mds_ats[:,0], Y_mds_ats[:,1], s=200, c='r', zorder=3)
         for i in range(Y_mds_ats.shape[0]):
-            plt.text(Y_mds_ats[i,0], Y_mds_ats[i,1], i+1, horizontalalignment='center', verticalalignment='center', fontdict={'color': 'white','size':10,'weight':'bold'}, zorder=4)
+            ax.text(Y_mds_ats[i,0], Y_mds_ats[i,1], i+1, horizontalalignment='center', verticalalignment='center', fontdict={'color': 'white','size':10,'weight':'bold'}, zorder=4)
 
     def plot_pca_data_ats(self, data, c=None):
         pca = PCA(n_components=2)
@@ -126,11 +127,15 @@ class AAnet(object):
         at_recon = self.sess.run(self.x__, feed_dict={self.z: Z_at_m11})
         Y_pca = pca.fit_transform(at_recon)
         Y_pca_z = pca.transform(data)
-        fig = plt.figure(figsize=(8, 6))
-        plt.scatter(Y_pca_z[:,0], Y_pca_z[:,1], s=1, alpha=0.5, c=c)
-        plt.scatter(Y_pca[:,0], Y_pca[:,1], s=200, c='r')
+        fig, ax = plt.subplots(1, figsize=(8,6))
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_xlabel('PC1')
+        ax.set_ylabel('PC2')
+        ax.scatter(Y_pca_z[:,0], Y_pca_z[:,1], s=1, alpha=0.5, c=c)
+        ax.scatter(Y_pca[:,0], Y_pca[:,1], s=200, c='r')
         for i in range(Y_pca.shape[0]):
-            plt.text(Y_pca[i,0], Y_pca[i,1], i+1, horizontalalignment='center', verticalalignment='center', fontdict={'color': 'white','size':10,'weight':'bold'})
+            ax.text(Y_pca[i,0], Y_pca[i,1], i+1, horizontalalignment='center', verticalalignment='center', fontdict={'color': 'white','size':10,'weight':'bold'})
 
     def plot_pca_data_recon_ats(self, data, c=None):
         pca = PCA(n_components=2)
