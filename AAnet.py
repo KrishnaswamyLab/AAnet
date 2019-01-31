@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 
 class AAnet(object):
-    def __init__(self, enc_net, dec_net, gamma_mse=1.0, gamma_nn=1.0, gamma_convex=1.0, learning_rate=1e-3, rseed=42, c_dim=0):
+    def __init__(self, enc_net, dec_net, gamma_mse=1.0, gamma_nn=1.0, gamma_convex=1.0, learning_rate=1e-3, rseed=42, gpu_mem=0.4):
 
         tf.reset_default_graph()
 
@@ -20,31 +20,26 @@ class AAnet(object):
         self.num_at = self.enc_net.num_at
         self.x_dim = self.dec_net.x_dim
         self.z_dim = self.num_at-1
-        # self.c_dim = c_dim
         self.learning_rate = learning_rate
         self.rseed = rseed
         self.is_training = tf.keras.backend.learning_phase()
+        self.gpu_mem = gpu_mem
 
         # tensors
         self.x = tf.placeholder(tf.float32, [None, self.x_dim], name='x')
-        # self.c = tf.placeholder(tf.float32, [None, self.c_dim], name='c')
         self.z = tf.placeholder(tf.float32, [None, self.z_dim], name='z')
-        # self.zc = tf.concat([self.z, self.c], axis=1) # add condition
 
         # network
         self.z_ = self.enc_net(self.x, reuse=False) # encoder
-        # self.z_c = tf.concat([self.z_, self.c], axis=1) # add condition
-        # self.x_ = self.dec_net(self.z_c, reuse=False) # decoder
         self.x_ = self.dec_net(self.z_, reuse=False) # decoder
         self.z_01 = (self.z_ + 1) / 2
         self.z_01_full = tf.concat([self.z_01, tf.reshape(1-tf.reduce_sum(self.z_01, axis=1), (-1,1))], 1) # add virtual archetype
-        # self.x__ = self.dec_net(self.zc) # decoding from z
         self.x__ = self.dec_net(self.z) # decoding from z
 
         # loss
         self.mse_loss = tf.reduce_mean(tf.square(self.x - self.x_))
-        self.convex_loss = tf.reduce_mean(tf.maximum(tf.reduce_sum(self.z_01, axis=1) - 1, 0)) # for P-1
-        self.nn_loss = -1 * tf.reduce_mean(tf.reduce_sum(tf.minimum(self.z_01, 0), axis=1)) # for P-1
+        self.convex_loss = tf.reduce_mean(tf.maximum(tf.reduce_sum(self.z_01, axis=1) - 1, 0))
+        self.nn_loss = -1 * tf.reduce_mean(tf.reduce_sum(tf.minimum(self.z_01, 0), axis=1))
         self.loss = self.gamma_mse * self.mse_loss
         self.loss += self.gamma_convex * self.convex_loss
         self.loss += self.gamma_nn * self.nn_loss
@@ -55,9 +50,10 @@ class AAnet(object):
             self.ae_adam = tf.train.AdamOptimizer(learning_rate=self.learning_rate, beta1=0.5, beta2=0.9)\
                 .minimize(self.loss, var_list=self.enc_net.vars+self.dec_net.vars)
         
+        # set gpu config
         conf = tf.ConfigProto()                                                                                                                                                                                                                  
-        conf.gpu_options.allow_growth=True
-        conf.gpu_options.per_process_gpu_memory_fraction=0.4
+        conf.gpu_options.allow_growth = True
+        conf.gpu_options.per_process_gpu_memory_fraction = self.gpu_mem
         #conf.log_device_placement=True
         self.sess = tf.Session(config=conf)
         np.random.seed(self.rseed)
@@ -76,28 +72,21 @@ class AAnet(object):
         return self.sess.run(self.z_01_full, feed_dict={self.x: data})
 
     def data2z(self, data):
-        data = data[:,1:]
         return self.sess.run(self.z_, feed_dict={self.x: data})
 
-    def z2data(self, z, cond=None):
-        # if cond==None:
-        #     cvec = np.zeros([z.shape[0],self.c_dim])
-        #     cvec = cvec - 1
-        #     cvec[:,0] = 1
-        # else:
-        #     cvec = cond
+    def z2data(self, z):
         return self.sess.run(self.x__, feed_dict={self.z: z})
 
-    def at2data(self, z, cond=None):
+    def at2data(self, z):
         z = (z * 2) - 1
         z = z[:,:-1]
-        return self.z2data(z, cond=cond)
+        return self.z2data(z)
 
     def get_ats(self):
         return np.eye(self.num_at)
 
-    def get_ats_x(self, cond=None):
-        return self.at2data(self.get_ats(), cond=cond)
+    def get_ats_x(self):
+        return self.at2data(self.get_ats())
 
     def plot_at_mds(self, data, c=None):
         data_at = self.data2at(data)
@@ -129,17 +118,11 @@ class AAnet(object):
         for i in range(Y_pca.shape[0]):
             plt.text(Y_pca[i,0], Y_pca[i,1], i+1, horizontalalignment='center', verticalalignment='center', fontdict={'color': 'white','size':10,'weight':'bold'})
 
-    def plot_pca_ats_data(self, data, c=None, cond=None):
+    def plot_pca_ats_data(self, data, c=None):
         pca = PCA(n_components=2)
         Z_at = np.eye(self.num_at)
         Z_at_m11 = (Z_at * 2) - 1
         Z_at_m11 = Z_at_m11[:,:-1]
-        # if cond is None:
-        #     cvec = np.zeros([Z_at_m11.shape[0],self.c_dim])
-        #     cvec = cvec - 1
-        #     cvec[:,0] = 1
-        # else:
-        #     cvec = cond
         at_recon = self.sess.run(self.x__, feed_dict={self.z: Z_at_m11})
         Y_pca = pca.fit_transform(at_recon)
         Y_pca_z = pca.transform(data)
@@ -259,58 +242,27 @@ class AAnet(object):
     def close_sess(self):
         self.sess.close()
 
-    def train(self, data, batch_size=128, num_batches=20000, verbose=True, min_loss=0, cond=None):
+    def train(self, data, batch_size=128, num_batches=20000, verbose=True):
         start_time = time.time()
 
-        # todo: per epoch
         for t in range(0, num_batches):
             bx, idx = self.sample_x(data, batch_size)
-            # if cond is None:
-            #     bc = np.zeros([bx.shape[0],self.c_dim])
-            #     bc = bc - 1
-            #     bc[:,0] = 1
-            # else:
-            #     bc = cond[idx,:]
             self.sess.run(self.ae_adam, feed_dict={self.x: bx, self.is_training: 1})
 
             if verbose and (t % 500 == 0 or t+1 == num_batches):
                 bx, idx = self.sample_x(data, np.min([data.shape[0],batch_size*10]))
-                # if cond is None:
-                #     bc = np.zeros([bx.shape[0],self.c_dim])
-                #     bc = bc - 1
-                #     bc[:,0] = 1
-                # else:
-                #     bc = cond[idx,:]
                 loss = self.sess.run(
                     self.loss, feed_dict={self.x: bx}
                 )
-                #loss = self.compute_loss(data)
+                #loss = self.compute_loss(data) # compute loss on all data
                 print('Iter [%8d] Time [%5.4f] loss [%.4f]' %
                             (t, time.time() - start_time, loss))
-                if loss < min_loss:
-                    break
 
         if verbose:
             print('done.')
 
-    def compute_loss(self, data, cond=None):
-        # if cond==None:
-        #     c = np.zeros([data.shape[0],self.c_dim])
-        #     c = c - 1
-        #     c[:,0] = 1
-        # else:
-        #     c = cond
+    def compute_loss(self, data):
         return self.sess.run(self.loss, feed_dict={self.x: data})
 
     def compute_mse_loss(self, data):
         return self.sess.run(self.mse_loss, feed_dict={self.x: data})
-
-    def pcasvd(self, X, k):
-        X_mu = np.mean(X, keepdims=True, axis=0)
-        X = X - X_mu
-        [U,S,_] = np.linalg.svd(X.T)
-        U = U[:,:k]
-        S = S[:k]
-        Y = X @ U;
-        return (Y, X_mu, U, S)
-

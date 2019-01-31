@@ -1,1 +1,1 @@
-# AAnet
+# Archetypal Analysis network - AAnet
