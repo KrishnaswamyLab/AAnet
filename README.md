@@ -4,4 +4,4 @@
 
 ![alt text](https://github.com/KrishnaswamyLab/AAnet/blob/master/AAnet.png)
 
-See [AAnet_tutorial_MNIST.ipynb](https://nbviewer.jupyter.org/github/KrishnaswamyLab/PHATE/blob/master/Python/tutorial/EmbryoidBody.ipynb) for an example of running AAnet on MNIST
+See [AAnet_tutorial_MNIST.ipynb](https://nbviewer.jupyter.org/github/KrishnaswamyLab/AAnet/blob/master/AAnet_tutorial_MNIST.ipynb) for an example of running AAnet on MNIST
