@@ -8,13 +8,14 @@ import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 
 class AAnet(object):
-    def __init__(self, enc_net, dec_net, gamma_mse=1.0, gamma_nn=1.0, gamma_convex=1.0, learning_rate=1e-3, rseed=42, gpu_mem=0.4):
+    def __init__(self, enc_net, dec_net, gamma_mse=1.0, gamma_nn=1.0, gamma_convex=1.0, gamma_cv=0.0, learning_rate=1e-3, rseed=42, gpu_mem=0.4):
 
         tf.reset_default_graph()
 
         self.gamma_mse = gamma_mse
         self.gamma_nn = gamma_nn
         self.gamma_convex = gamma_convex
+        self.gamma_cv = gamma_cv
         self.enc_net = enc_net
         self.dec_net = dec_net
         self.num_at = self.enc_net.num_at
@@ -40,9 +41,13 @@ class AAnet(object):
         self.mse_loss = tf.reduce_mean(tf.square(self.x - self.x_))
         self.convex_loss = tf.reduce_mean(tf.maximum(tf.reduce_sum(self.z_01, axis=1) - 1, 0))
         self.nn_loss = -1 * tf.reduce_mean(tf.reduce_sum(tf.minimum(self.z_01, 0), axis=1))
+        mu, sigma = tf.nn.moments(self.z_01_full, axes=[0])
+        self.cv = tf.reduce_mean(sigma / mu)
+
         self.loss = self.gamma_mse * self.mse_loss
         self.loss += self.gamma_convex * self.convex_loss
         self.loss += self.gamma_nn * self.nn_loss
+        self.loss -= self.gamma_cv * self.cv
 
         # optimizer
         self.ae_adam = None
@@ -243,6 +248,10 @@ class AAnet(object):
         d = 1 - d
         d = d / (1 - 1/self.num_at)
         return d
+
+    def dist_to_hull(self, data):
+        samples_Z = self.sess.run(self.z_01_full, feed_dict={self.x: data})
+        return np.maximum(np.max(samples_Z-1, axis=1),0) + np.maximum(np.max(-samples_Z, axis=1),0)
 
     def close_sess(self):
         self.sess.close()
