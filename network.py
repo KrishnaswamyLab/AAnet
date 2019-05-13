@@ -46,14 +46,17 @@ class Decoder(object):
         self.act_at = act_at
 
     def __call__(self, z, reuse=True, c=None):
+        """Defines the decode meta variables"""
         with tf.variable_scope(self.name) as vs:
             if reuse:
                 vs.reuse_variables()
             fc = z
             fc = tf.keras.layers.GaussianNoise(self.noise_z_std)(fc)
             if c != None:
+                """Optionally concat noise(z) to z """
                 fc = tf.concat([fc, z], axis=1)
             for idx,out_dim in enumerate(self.layers_dim):
+                """Define activations"""
                 if idx == len(self.layers_dim)-1:
                     act_fun = self.act_out
                 elif idx == 0:
@@ -110,7 +113,7 @@ class FreyConvDecoder(object):
         self.x_dim = x_dim
         self.name = 'frey/convae/dec_net'
         self.noise_z_std = noise_z_std
-        self.act_out = act_out  
+        self.act_out = act_out
         self.x_dim = x_dim
         self.x_shape = [28, 20, 1]
         self.nfilt = 32
@@ -297,8 +300,3 @@ class CelebA56ConvDecoder(object):
     @property
     def vars(self):
         return [var for var in tf.global_variables() if self.name in var.name]
-
-
-
-
-
