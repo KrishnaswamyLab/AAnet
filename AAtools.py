@@ -2,12 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
-def plot_mnist(samples, nc=12):
+def plot_mnist(samples, shape=(28,28), n_cols=12):
     n = samples.shape[0]
-    nc = np.minimum(nc,n)
-    nr = np.ceil(n / nc).astype('int')
-    fig = plt.figure(figsize=(nc*1, nr*1))
-    gs = gridspec.GridSpec(nr, nc)
+    n_cols = np.minimum(n_cols,n)
+    n_rows = np.ceil(n / n_cols).astype('int')
+    fig = plt.figure(figsize=(n_cols*1, n_rows*1))
+    gs = gridspec.GridSpec(n_rows, n_cols)
     gs.update(wspace=0.05, hspace=0.05)
 
     for i, sample in enumerate(samples):
@@ -16,14 +16,14 @@ def plot_mnist(samples, nc=12):
         ax.set_xticklabels([])
         ax.set_yticklabels([])
         ax.set_aspect('equal')
-        plt.imshow(sample.reshape(28, 28), cmap='Greys_r')
+        plt.imshow(sample.reshape(shape), cmap='Greys_r')
 
-def plot_frey(samples, nc=12):
+def plot_frey(samples, n_cols=12):
     n = samples.shape[0]
-    nc = np.minimum(nc,n)
-    nr = np.ceil(n / nc).astype('int')
-    fig = plt.figure(figsize=(nc*1.5*(20/28), nr*1.5))
-    gs = gridspec.GridSpec(nr, nc)
+    n_cols = np.minimum(n_cols,n)
+    n_rows = np.ceil(n / n_cols).astype('int')
+    fig = plt.figure(figsize=(n_cols*1.5*(20/28), n_rows*1.5))
+    gs = gridspec.GridSpec(n_rows, n_cols)
     gs.update(wspace=0.05, hspace=0.05)
 
     for i, sample in enumerate(samples):
@@ -34,14 +34,14 @@ def plot_frey(samples, nc=12):
         ax.set_aspect('equal')
         plt.imshow(sample.reshape(28, 20), cmap='Greys_r')
 
-def plot_celeba(samples, nc=12, D=28):
+def plot_celeba(samples, n_cols=12, D=28):
     samples = samples + 1
     samples = samples / 2
     n = samples.shape[0]
-    nc = np.minimum(nc,n)
-    nr = np.ceil(n / nc).astype('int')
-    fig = plt.figure(figsize=(nc*1.5, nr*1.5))
-    gs = gridspec.GridSpec(nr, nc)
+    n_cols = np.minimum(n_cols,n)
+    n_rows = np.ceil(n / n_cols).astype('int')
+    fig = plt.figure(figsize=(n_cols*1.5, n_rows*1.5))
+    gs = gridspec.GridSpec(n_rows, n_cols)
     gs.update(wspace=0.05, hspace=0.05)
 
     for i, sample in enumerate(samples):
