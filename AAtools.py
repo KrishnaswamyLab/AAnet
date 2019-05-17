@@ -18,6 +18,7 @@ def plot_mnist(samples, shape=(28,28), n_cols=12):
         ax.set_aspect('equal')
         plt.imshow(sample.reshape(shape), cmap='Greys_r')
 
+    return ax
 def plot_frey(samples, n_cols=12):
     n = samples.shape[0]
     n_cols = np.minimum(n_cols,n)

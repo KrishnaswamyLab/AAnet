@@ -1,4 +1,3 @@
-
 import time
 import tensorflow as tf
 import numpy as np
@@ -8,6 +7,35 @@ import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 
 class AAnet(object):
+    """Short summary.
+
+    Parameters
+    ----------
+    enc_net : type
+        Description of parameter `enc_net`.
+    dec_net : type
+        Description of parameter `dec_net`.
+    gamma_mse : type
+        Description of parameter `gamma_mse`.
+    gamma_nn : type
+        Description of parameter `gamma_nn`.
+    gamma_convex : type
+        Description of parameter `gamma_convex`.
+    gamma_cv : type
+        Description of parameter `gamma_cv`.
+    learning_rate : type
+        Description of parameter `learning_rate`.
+    rseed : type
+        Description of parameter `rseed`.
+    gpu_mem : type
+        Description of parameter `gpu_mem`.
+
+    Returns
+    -------
+    type
+        Description of returned object.
+
+    """
     def __init__(self, enc_net, dec_net, gamma_mse=1.0, gamma_nn=1.0, gamma_convex=1.0, gamma_cv=0.0, learning_rate=1e-3, rseed=42, gpu_mem=0.4):
 
         tf.reset_default_graph()
@@ -54,9 +82,9 @@ class AAnet(object):
         with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
             self.ae_adam = tf.train.AdamOptimizer(learning_rate=self.learning_rate, beta1=0.5, beta2=0.9)\
                 .minimize(self.loss, var_list=self.enc_net.vars+self.dec_net.vars)
-        
+
         # set gpu config
-        conf = tf.ConfigProto()                                                                                                                                                                                                                  
+        conf = tf.ConfigProto()
         conf.gpu_options.allow_growth = True
         conf.gpu_options.per_process_gpu_memory_fraction = self.gpu_mem
         #conf.log_device_placement=True
@@ -98,8 +126,7 @@ class AAnet(object):
         embedding = MDS(n_components=2)
         Y_mds_ats = embedding.fit_transform(self.get_ats_x())
         Y_mds_data = data_at @ Y_mds_ats
-        nbrs = NearestNeighbors(n_neighbors=3).fit(Y_mds_ats)
-        _, indices = nbrs.kneighbors(Y_mds_ats)
+
         fig, ax = plt.subplots(1, figsize=(8,6))
         ax.set_xticks([])
         ax.set_yticks([])
@@ -109,6 +136,7 @@ class AAnet(object):
         ax.scatter(Y_mds_ats[:,0], Y_mds_ats[:,1], s=200, c='r', zorder=3)
         for i in range(Y_mds_ats.shape[0]):
             ax.text(Y_mds_ats[i,0], Y_mds_ats[i,1], i+1, horizontalalignment='center', verticalalignment='center', fontdict={'color': 'white','size':10,'weight':'bold'}, zorder=4)
+        return ax
 
     def plot_pca_data_ats(self, data, c=None):
         pca = PCA(n_components=2)
@@ -191,7 +219,7 @@ class AAnet(object):
         samples_Z = self.sess.run(self.z_01_full, feed_dict={self.x: data})
         f, axarr = plt.subplots(n_plot, n_plot, figsize=(4*n_plot, 3*n_plot))
         for i in range(n_plot):
-            for j in range(n_plot):   
+            for j in range(n_plot):
                 axarr[i, j].scatter(samples_Z[:,i], samples_Z[:,j], s=1, alpha=0.5, c=c)
                 axarr[i, j].scatter(Z_at[:,i], Z_at[:,j], s=20, c='r')
 
@@ -205,7 +233,7 @@ class AAnet(object):
         Y_at = pca.transform(Z_at)
         f, axarr = plt.subplots(n_plot, n_plot, figsize=(4*n_plot, 3*n_plot))
         for i in range(n_plot):
-            for j in range(n_plot):   
+            for j in range(n_plot):
                 axarr[i, j].scatter(Y[:,i], Y[:,j], s=.5, alpha=0.5, c=c)
                 axarr[i, j].scatter(Y_at[:,i], Y_at[:,j], s=20, c='r')
 
