@@ -60,7 +60,8 @@ def calc_MSE(m1, m2):
     return mse, m1_idx, m2_idx
 
 def run_AA(data, true_archetypal_coords, true_archetypes, n_archetypes, method='PCHA',
-                n_subsample=None, n_batches=35000, seed=42):
+                n_subsample=None, n_batches=40000, latent_noise=0.05,
+                arch=[1024,512,256,128], seed=42):
     """Runs Chen at al. 2014 on input data and calculates errors on the
     data in the archetypal space and the error between the learned vs true
     archetypes.
@@ -178,8 +179,8 @@ def run_AA(data, true_archetypal_coords, true_archetypes, n_archetypes, method='
         # MODEL PARAMS
         ##############
 
-        noise_z_std = 0.05
-        z_dim = [512,256,128]
+        noise_z_std = latent_noise
+        z_dim = arch
         act_out = tf.nn.tanh
         input_dim = data.shape[1]
 
