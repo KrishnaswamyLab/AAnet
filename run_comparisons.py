@@ -60,7 +60,7 @@ def calc_MSE(m1, m2):
     mse = (np.square(m1[m1_idx,:] - m2[m2_idx,:])).mean()
     return mse, m1_idx, m2_idx
 
-def run_AA(data, true_archetypal_coords, true_archetypes, n_archetypes, method='PCHA',
+def run_AA(data, n_archetypes, true_archetypal_coords=None, true_archetypes=None, method='PCHA',
                 n_subsample=None, n_batches=40000, latent_noise=0.05,
                 arch=[1024,512,256,128], seed=42):
     """Runs Chen at al. 2014 on input data and calculates errors on the
@@ -205,9 +205,15 @@ def run_AA(data, true_archetypal_coords, true_archetypes, n_archetypes, method='
     else:
         raise ValueError('{} is not a valid method'.format(method))
     toc = time.time() - tic
-    # Calculate MSE
-    mse_archetypes ,_ ,_ = calc_MSE(new_archetypes, true_archetypes)
-    mse_encoding ,_ ,_ = calc_MSE(new_archetypal_coords.T, true_archetypal_coords.T)
+    # Calculate MSE if given ground truth
+    if true_archetypes is not None:
+        mse_archetypes ,_ ,_ = calc_MSE(new_archetypes, true_archetypes)
+    else:
+        mse_archetypes = None
+    if true_archetypal_coords is not None:
+        mse_encoding ,_ ,_ = calc_MSE(new_archetypal_coords.T, true_archetypal_coords.T)
+    else:
+        mse_encoding = None
 
     return mse_archetypes, mse_encoding, new_archetypal_coords, new_archetypes, toc
 
