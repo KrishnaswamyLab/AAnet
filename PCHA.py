@@ -71,6 +71,7 @@ def PCHA(X, noc, I=None, U=None, delta=0, verbose=False, conv_crit=1E-6, maxiter
         return S, SSE, muS, SSt
 
     def C_update(X, XSt, XC, SSt, C, delta, muC, mualpha, SST, SSE, niter=1):
+
         """Update C for one iteration of the algorithm."""
         J, nos = C.shape
 

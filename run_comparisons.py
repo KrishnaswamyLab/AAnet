@@ -3,6 +3,7 @@
 import os
 import pickle
 import sys
+import time
 sys.path.append('/home/dan/burkhardt/software/AAnet/')
 
 import AAnet
@@ -78,7 +79,7 @@ def run_AA(data, true_archetypal_coords, true_archetypes, n_archetypes, method='
         Number of archetypes to be learned
     n_archetypes : int
         Number of observations to subsample for testing
-    method : ['PCHA', 'kernelPCHA', 'Chen', 'Javadi', 'PCHA_on_AE', 'AAnet', 'NMF']
+    method : ['PCHA', 'kernelPCHA', 'Chen', 'Javadi', 'NMF', 'PCHA_on_AE', 'AAnet']
         The method to use for archetypal analysis
     n_subsample : int
         Number of data points to subsample
@@ -99,7 +100,7 @@ def run_AA(data, true_archetypal_coords, true_archetypes, n_archetypes, method='
     new_archetypes: [archetypes, features]
         Learned archetypes in the feature space
     """
-
+    tic = time.time()
     # Select a subsample of the data
     np.random.seed(seed)
     if n_subsample is not None:
@@ -119,7 +120,8 @@ def run_AA(data, true_archetypal_coords, true_archetypes, n_archetypes, method='
         '''AA as implemented in Javadi et al. 2017 https://arxiv.org/abs/1705.02994'''
 
         new_archetypal_coords, new_archetypes, _, _ = javadi.acc_palm_nmf(data,
-                                        r=n_archetypes, maxiter=25, plotloss=False)
+                                        r=n_archetypes, maxiter=25, plotloss=False,
+                                        ploterror=False)
     elif method == 'PCHA':
         '''Principal convex hull analysis as implemented by Morup and Hansen 2012.
         https://www.sciencedirect.com/science/article/pii/S0925231211006060 '''
@@ -142,15 +144,15 @@ def run_AA(data, true_archetypal_coords, true_archetypes, n_archetypes, method='
     elif method == 'NMF':
         '''Factor analysis using non-negative matrix factorization (NMF)'''
         nnmf = NMF(n_components=n_archetypes, init='nndsvda', tol=1e-4, max_iter=1000)
-        new_archetypal_coords = nnmf.fit_transform(data)
+        new_archetypal_coords = nnmf.fit_transform(data - np.min(data))
         new_archetypes = nnmf.components_
 
     elif method == 'PCHA_on_AE':
         ##############
         # MODEL PARAMS
         ##############
-        noise_z_std = 0.05
-        z_dim = [512,256,128]
+        noise_z_std = 0
+        z_dim = arch
         act_out = tf.nn.tanh
         input_dim = data.shape[1]
 
@@ -164,10 +166,10 @@ def run_AA(data, true_archetypal_coords, true_archetypes, n_archetypes, method='
         ##########
         # AE
         AE.train(data, batch_size=256, num_batches=n_batches)
-        latent_encoding = AE.data2z(xyz)
+        latent_encoding = AE.data2z(data)
 
         # PCHA learns an encoding into a simplex
-        new_archetypes, new_archetypal_coords, _, _, _ = PCHA(latent_encoding.T, noc=nat)
+        new_archetypes, new_archetypal_coords, _, _, _ = PCHA(latent_encoding.T, noc=n_archetypes)
         new_archetypes = np.array(new_archetypes.T)
         new_archetypal_coords = np.array(new_archetypal_coords.T)
 
@@ -202,9 +204,57 @@ def run_AA(data, true_archetypal_coords, true_archetypes, n_archetypes, method='
         new_archetypes = model.get_ats_x()
     else:
         raise ValueError('{} is not a valid method'.format(method))
-
+    toc = time.time() - tic
     # Calculate MSE
     mse_archetypes ,_ ,_ = calc_MSE(new_archetypes, true_archetypes)
     mse_encoding ,_ ,_ = calc_MSE(new_archetypal_coords.T, true_archetypal_coords.T)
 
-    return mse_archetypes, mse_encoding, new_archetypal_coords, new_archetypes
+    return mse_archetypes, mse_encoding, new_archetypal_coords, new_archetypes, toc
+
+
+def get_new_digit(curr_img, weights=None):
+    if weights is None:
+        # Get weights (aka the archetypal space)
+        u = np.random.uniform(0,1, 4)
+        e = -np.log(u)
+        weights = e / np.sum(e)
+    elif weights.sum() != 1:
+        raise ValueError('`weights` must sum to 1.')
+
+    # Transformation from the archetypal space to the latent space
+    h_scale = 2.25 - (weights[2] * 1.5)
+    v_scale = (weights[2] * 1.5) + .75
+    rotation = 0#weights[2] * 45
+    h_offset = (weights[1] * 20) - 10
+    v_offset = (weights[0] * 20) - 10
+
+    ## Apply rescaling and place rescaled image in a larger canvas
+    img_tform = transform.rescale(curr_img, (v_scale, h_scale))# h_scale))
+
+    #plt.matshow(img_tform)
+    blank_canvas = np.zeros((84,84))
+
+    # Handle horizontal rescaling
+    h_start = (blank_canvas.shape[0] - img_tform.shape[0]) / 2
+    h_delta = h_start % 1 # need to translate by this amount
+    h_start = int(h_start // 1)
+    h_stop  =  h_start + img_tform.shape[0]
+
+    # Handle vertical rescaling
+    v_start = (blank_canvas.shape[1] - img_tform.shape[1]) / 2
+    v_delta = v_start % 1 # need to translate by this amount
+    v_start = int(v_start // 1)
+    v_stop  =  v_start + img_tform.shape[1]
+
+    # Place Image on canvas
+    blank_canvas[h_start:h_stop, v_start:v_stop] = img_tform
+
+    # Translate image at subpixel resolution to make sure it's properly centered
+    tform = AffineTransform(translation=(-h_delta - h_offset , -v_delta - v_offset))
+    shifted = warp(blank_canvas, tform, mode='wrap', preserve_range=True)
+
+    # Finally, apply rotation
+    shifted = transform.rotate(shifted, rotation)
+
+    return shifted, weights
+    #plt.matshow(blank_canvas)
