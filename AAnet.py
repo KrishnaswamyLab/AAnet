@@ -1,3 +1,4 @@
+# Submitted to 33rd Conference on Neural Information Processing Systems (NeurIPS 2019). Do not distribute
 import time
 import tensorflow as tf
 import numpy as np
@@ -7,33 +8,45 @@ import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 
 class AAnet(object):
-    """Short summary.
+    """Main Class for running AAnet.
 
-    Parameters
-    ----------
-    enc_net : type
-        Description of parameter `enc_net`.
-    dec_net : type
-        Description of parameter `dec_net`.
-    gamma_mse : type
-        Description of parameter `gamma_mse`.
-    gamma_nn : type
-        Description of parameter `gamma_nn`.
-    gamma_convex : type
-        Description of parameter `gamma_convex`.
-    gamma_cv : type
-        Description of parameter `gamma_cv`.
-    learning_rate : type
-        Description of parameter `learning_rate`.
-    rseed : type
-        Description of parameter `rseed`.
-    gpu_mem : type
-        Description of parameter `gpu_mem`.
+    Usage:
 
-    Returns
-    -------
-    type
-        Description of returned object.
+    ```
+    ##############
+    # MODEL PARAMS
+    ##############
+
+    noise_z_std = 0.5 # This is the noise added to the latent space during training
+    z_dim = [1024, 512, 256, 128] # Layer dimensions for encoder and decoder (reversed)
+    act_out = tf.nn.tanh # Activation for the final layer
+    input_dim = data.shape[1]
+    n_batches = 40000 # Batches for training
+
+    # Create encoder
+    enc_net = network.Encoder(num_at=n_archetypes, z_dim=z_dim)
+    # Create decoder
+    dec_net = network.Decoder(x_dim=input_dim, noise_z_std=noise_z_std, z_dim=z_dim, act_out=act_out)
+    # Assemble model
+    model = AAnet.AAnet(enc_net, dec_net)
+
+    ##########
+    # TRAINING
+    ##########
+
+    model.train(data, batch_size=256, num_batches=n_batches)
+
+    ###################
+    # GETTING OUTPUT
+    ###################
+
+    # Get convex archetypal mixtures for input data. Output is data x archetypes. Rows sum to 1.
+    # This is the 'archetypal space'
+    new_archetypal_coords = model.data2at(data)
+    # Get archetypes in the feature space
+    new_archetypes = model.get_ats_x()
+
+    ```
 
     """
     def __init__(self, enc_net, dec_net, gamma_mse=1.0, gamma_nn=1.0, gamma_convex=1.0, learning_rate=1e-3, rseed=42, gpu_mem=0.4):

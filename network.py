@@ -1,4 +1,3 @@
-
 import tensorflow as tf
 import tensorflow.layers as layers
 import numpy as np
@@ -75,6 +74,7 @@ class Decoder(object):
         return [var for var in tf.global_variables() if self.name in var.name]
 
 class FreyConvEncoder(object):
+    '''Convolutional network for Frey faces dataset'''
     def __init__(self, num_at, z_dim=None):
         self.name = 'frey/convae/enc_net'
         self.nfilt = 32
@@ -109,6 +109,8 @@ class FreyConvEncoder(object):
         return [var for var in tf.global_variables() if self.name in var.name]
 
 class FreyConvDecoder(object):
+    '''Convolutional network for Frey faces dataset'''
+
     def __init__(self, x_dim, noise_z_std=0.0, act_out=tf.nn.tanh):
         self.x_dim = x_dim
         self.name = 'frey/convae/dec_net'
