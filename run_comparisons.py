@@ -77,8 +77,6 @@ def run_AA(data, n_archetypes, true_archetypal_coords=None, true_archetypes=None
         Ground truth archetypes in the feature space
     n_archetypes : int
         Number of archetypes to be learned
-    n_archetypes : int
-        Number of observations to subsample for testing
     method : ['PCHA', 'kernelPCHA', 'Chen', 'Javadi', 'NMF', 'PCHA_on_AE', 'AAnet']
         The method to use for archetypal analysis
     n_subsample : int
