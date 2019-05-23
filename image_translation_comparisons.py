@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Submitted to 33rd Conference on Neural Information Processing Systems (NeurIPS 2019). Do not distribute
 
 import os, pickle, time, itertools
 from urllib.request import urlopen

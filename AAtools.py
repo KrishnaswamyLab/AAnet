@@ -1,4 +1,4 @@
-# Plotting functions for AAnet
+# Submitted to 33rd Conference on Neural Information Processing Systems (NeurIPS 2019). Do not distribute
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec

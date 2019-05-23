@@ -17,7 +17,7 @@ class AAnet(object):
     # MODEL PARAMS
     ##############
 
-    noise_z_std = 0.5 # This is the noise added to the latent space during training
+    noise_z_std = 0.05 # Noise added to the latent space during training
     z_dim = [1024, 512, 256, 128] # Layer dimensions for encoder and decoder (reversed)
     act_out = tf.nn.tanh # Activation for the final layer
     input_dim = data.shape[1]
@@ -45,7 +45,6 @@ class AAnet(object):
     new_archetypal_coords = model.data2at(data)
     # Get archetypes in the feature space
     new_archetypes = model.get_ats_x()
-
     ```
 
     """
