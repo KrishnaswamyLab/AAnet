@@ -36,14 +36,13 @@ class AAnet(object):
         Description of returned object.
 
     """
-    def __init__(self, enc_net, dec_net, gamma_mse=1.0, gamma_nn=1.0, gamma_convex=1.0, gamma_cv=0.0, learning_rate=1e-3, rseed=42, gpu_mem=0.4):
+    def __init__(self, enc_net, dec_net, gamma_mse=1.0, gamma_nn=1.0, gamma_convex=1.0, learning_rate=1e-3, rseed=42, gpu_mem=0.4):
 
         tf.reset_default_graph()
 
         self.gamma_mse = gamma_mse
         self.gamma_nn = gamma_nn
         self.gamma_convex = gamma_convex
-        self.gamma_cv = gamma_cv
         self.enc_net = enc_net
         self.dec_net = dec_net
         self.num_at = self.enc_net.num_at
@@ -70,12 +69,10 @@ class AAnet(object):
         self.convex_loss = tf.reduce_mean(tf.maximum(tf.reduce_sum(self.z_01, axis=1) - 1, 0))
         self.nn_loss = -1 * tf.reduce_mean(tf.reduce_sum(tf.minimum(self.z_01, 0), axis=1))
         mu, sigma = tf.nn.moments(self.z_01_full, axes=[0])
-        self.cv = tf.reduce_mean(sigma / mu)
 
         self.loss = self.gamma_mse * self.mse_loss
         self.loss += self.gamma_convex * self.convex_loss
         self.loss += self.gamma_nn * self.nn_loss
-        self.loss -= self.gamma_cv * self.cv
 
         # optimizer
         self.ae_adam = None
@@ -98,30 +95,50 @@ class AAnet(object):
         self.sess.run(tf.global_variables_initializer())
 
     def sample_x(self, data, n):
+        '''Get some of the input data'''
         idx = np.random.randint(data.shape[0], size=n)
         return data[idx,:], idx
 
     def data2at(self, data):
+        '''Runs data through the encoder to recover the correct archetypes.
+        Adds in the kth archetype as 1 - sum(archetypes[:k-1])'''
         return self.sess.run(self.z_01_full, feed_dict={self.x: data})
 
     def data2z(self, data):
+        '''Runs data through the encoder to get data in the latent space. Note,
+        the kth archetype is not returned'''
         return self.sess.run(self.z_, feed_dict={self.x: data})
 
     def z2data(self, z):
+        '''Runs points from the latent space, z, through the decoder and returns
+        those points in the feature space.'''
         return self.sess.run(self.x__, feed_dict={self.z: z})
 
     def at2data(self, z):
+        '''Takes points as a mixture of archetypes and decodes
+        back to the feature space.'''
         z = (z * 2) - 1
         z = z[:,:-1]
         return self.z2data(z)
 
     def get_ats(self):
+        '''Returns the archetypes in the latent space (i.e.) single activations
+        the nodes + 1'''
         return np.eye(self.num_at)
 
     def get_ats_x(self):
+        '''Returns the archetypes in the feature space'''
         return self.at2data(self.get_ats())
 
     def plot_at_mds(self, data, c=None):
+        '''Method for visualizing the latent archetypal space. Algorithm is:
+        1. MDS is performed on the archetypes in the feature space to provide
+           a frame for the data.
+        2. Points represented as a mixture of archetypes are interpolated between
+           the calculated coordinates for each at
+        This could also be achieved by running MDS on the latent space + archetypes. This
+        interpolation approach is faster and yeilds similar results.'''
+
         data_at = self.data2at(data)
         embedding = MDS(n_components=2)
         Y_mds_ats = embedding.fit_transform(self.get_ats_x())
@@ -139,6 +156,7 @@ class AAnet(object):
         return ax
 
     def plot_pca_data_ats(self, data, c=None):
+        '''Similar to above, but with PCA'''
         pca = PCA(n_components=2)
         Z_at = np.eye(self.num_at)
         Z_at_m11 = (Z_at * 2) - 1
@@ -239,6 +257,8 @@ class AAnet(object):
 
 
     def at_scan(self, n, nplot=99999):
+        '''Interpolate between archetypes'''
+
         up = np.linspace(0, 1, num=n)
         dn = np.linspace(1, 0, num=n)
         q = np.zeros([0,self.num_at])
@@ -251,12 +271,14 @@ class AAnet(object):
         return q
 
     def sample_at_uniform(self, n):
+        ''' Method for uniformly sampling from a simplex'''
         u = np.random.uniform(0,1,[n,self.num_at])
         e = -np.log(u)
         x = e / np.sum(e, axis=1, keepdims=True)
         return x
 
     def sample_boundary_uniform(self, n):
+        '''Sample the points along the boundary of a simplex'''
         x_all = []
         for i in range(num_at):
             x = self.sample_at_uniform(self.num_at-1, n)
@@ -265,12 +287,15 @@ class AAnet(object):
         return np.concatenate(x_all, axis=0)
 
     def sample_z_uniform(self, n):
+        '''Sample the latent space uniformly'''
         z = self.sample_at_uniform(n)
         z = (z * 2) - 1
         z = z[:,:-1]
         return z
 
     def dist_to_closest_at(self, data):
+        '''Calculate distance to the closest AT for a data point'''
+
         samples_Z = self.sess.run(self.z_01_full, feed_dict={self.x: data})
         d = tf.reduce_max(samples_Z, axis=1).eval(session=self.sess)
         d = 1 - d
@@ -278,6 +303,8 @@ class AAnet(object):
         return d
 
     def dist_to_hull(self, data):
+        '''Calculate distance to the outside of the simplex for a data point'''
+
         samples_Z = self.sess.run(self.z_01_full, feed_dict={self.x: data})
         return np.maximum(np.max(samples_Z-1, axis=1),0) + np.maximum(np.max(-samples_Z, axis=1),0)
 
@@ -285,6 +312,8 @@ class AAnet(object):
         self.sess.close()
 
     def train(self, data, batch_size=128, num_batches=20000, verbose=True):
+        '''Train the model'''
+
         start_time = time.time()
 
         for t in range(0, num_batches):

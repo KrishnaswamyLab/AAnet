@@ -205,6 +205,7 @@ def run_AA(data, n_archetypes, true_archetypal_coords=None, true_archetypes=None
     else:
         raise ValueError('{} is not a valid method'.format(method))
     toc = time.time() - tic
+
     # Calculate MSE if given ground truth
     if true_archetypes is not None:
         mse_archetypes ,_ ,_ = calc_MSE(new_archetypes, true_archetypes)
@@ -216,51 +217,3 @@ def run_AA(data, n_archetypes, true_archetypal_coords=None, true_archetypes=None
         mse_encoding = None
 
     return mse_archetypes, mse_encoding, new_archetypal_coords, new_archetypes, toc
-
-
-def get_new_digit(curr_img, weights=None):
-    if weights is None:
-        # Get weights (aka the archetypal space)
-        u = np.random.uniform(0,1, 4)
-        e = -np.log(u)
-        weights = e / np.sum(e)
-    elif weights.sum() != 1:
-        raise ValueError('`weights` must sum to 1.')
-
-    # Transformation from the archetypal space to the latent space
-    h_scale = 2.25 - (weights[2] * 1.5)
-    v_scale = (weights[2] * 1.5) + .75
-    rotation = 0#weights[2] * 45
-    h_offset = (weights[1] * 20) - 10
-    v_offset = (weights[0] * 20) - 10
-
-    ## Apply rescaling and place rescaled image in a larger canvas
-    img_tform = transform.rescale(curr_img, (v_scale, h_scale))# h_scale))
-
-    #plt.matshow(img_tform)
-    blank_canvas = np.zeros((84,84))
-
-    # Handle horizontal rescaling
-    h_start = (blank_canvas.shape[0] - img_tform.shape[0]) / 2
-    h_delta = h_start % 1 # need to translate by this amount
-    h_start = int(h_start // 1)
-    h_stop  =  h_start + img_tform.shape[0]
-
-    # Handle vertical rescaling
-    v_start = (blank_canvas.shape[1] - img_tform.shape[1]) / 2
-    v_delta = v_start % 1 # need to translate by this amount
-    v_start = int(v_start // 1)
-    v_stop  =  v_start + img_tform.shape[1]
-
-    # Place Image on canvas
-    blank_canvas[h_start:h_stop, v_start:v_stop] = img_tform
-
-    # Translate image at subpixel resolution to make sure it's properly centered
-    tform = AffineTransform(translation=(-h_delta - h_offset , -v_delta - v_offset))
-    shifted = warp(blank_canvas, tform, mode='wrap', preserve_range=True)
-
-    # Finally, apply rotation
-    shifted = transform.rotate(shifted, rotation)
-
-    return shifted, weights
-    #plt.matshow(blank_canvas)
