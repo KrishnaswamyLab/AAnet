@@ -1,6 +1,9 @@
-# Submitted to 33rd Conference on Neural Information Processing Systems (NeurIPS 2019). Do not distribute
-import tensorflow as tf
-import tensorflow.layers as layers
+# Copyright Krishnaswamy Lab 2020
+
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
+
+import tensorflow.compat.v1.layers as layers
 import numpy as np
 
 def bn(x, name=None):

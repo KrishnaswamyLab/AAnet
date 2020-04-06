@@ -1,6 +1,8 @@
-# Submitted to 33rd Conference on Neural Information Processing Systems (NeurIPS 2019). Do not distribute
+# Copyright Krishnaswamy Lab 2020
 import time
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
+
 import numpy as np
 from sklearn.manifold import MDS
 from sklearn.neighbors import NearestNeighbors
@@ -168,7 +170,7 @@ class AAnet(object):
         return ax
 
     def plot_pca_data_ats(self, data, c=None):
-        '''Similar to above, but with PCA'''
+        '''Similar to `plot_at_mds`, but with PCA'''
         pca = PCA(n_components=2)
         Z_at = np.eye(self.num_at)
         Z_at_m11 = (Z_at * 2) - 1
