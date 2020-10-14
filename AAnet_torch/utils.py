@@ -36,8 +36,8 @@ def generate_data_on_sphere(n_obs=1000, radius=1):
     data_atype = data @ archetypes
 
     # 2D points on simplex to points on a sphere
-    data_sphere  = _latlong_to_xyz(data_atype, radius=1)
-    atype_sphere = _latlong_to_xyz(archetypes, radius=1)
+    data_sphere  = _latlong_to_xyz(data_atype, radius=radius)
+    atype_sphere = _latlong_to_xyz(archetypes, radius=radius)
 
     # Center the data
     data_center = data_sphere.mean(axis=0, keepdims=True)
