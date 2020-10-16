@@ -64,7 +64,7 @@ def train_epoch(model, data_loader):
     loss = 0
     reconstruction_loss = 0
     archetypal_loss = 0
-    for batch_features, _ in train_loader:
+    for batch_features, _ in data_loader:
         # reshape mini-batch data to [N, 784] matrix
         # load it to the active device
         batch_features = batch_features.view(-1, 784).to(device)
@@ -96,7 +96,7 @@ def train_epoch(model, data_loader):
         loss += train_loss.item()
 
     # compute the epoch training loss
-    loss = loss / len(train_loader)
-    reconstruction_loss = reconstruction_loss / len(train_loader)
-    archetypal_loss = archetypal_loss / len(train_loader)
+    loss = loss / len(data_loader)
+    reconstruction_loss = reconstruction_loss / len(data_loader)
+    archetypal_loss = archetypal_loss / len(data_loader)
     return loss, reconstruction_loss, archetypal_loss
