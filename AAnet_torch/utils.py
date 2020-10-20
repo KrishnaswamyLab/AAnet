@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from sklearn.decomposition import PCA
 
 def get_n_simplex(n=2, scale=1, device=None):
     '''
@@ -20,7 +21,7 @@ def generate_data_on_sphere(n_obs=1000, radius=1):
     '''
     np.random.seed(0)
 
-    n_obs = 2000
+    n_obs = n_obs
     n_dim = 2
     n_archetypes = 3
 
@@ -59,22 +60,51 @@ def _latlong_to_xyz(X, radius=1):
     #x3 = (x3 - R) / 10
     return np.vstack([x3, y3, z3]).T
 
+def get_diffusion_extrema(data, diffusion_potential, n_archetypes, n_pcs=50):	
+    pc_op = PCA(n_pcs)	
+    data_pc = pc_op.fit_transform(diffusion_potential)	
+    extrema_idx = []	
+    for i in range(int(np.ceil(n_archetypes/2.0))):	
+        extrema_idx.append(np.argmin(data_pc[:,i]))	
+        extrema_idx.append(np.argmax(data_pc[:,i]))	
+        	
+    extrema = data[extrema_idx]	
+    return extrema
 
-def train_epoch(model, data_loader):
+def train_epoch(model, data_loader, optimizer, epoch, extrema=None,	
+                gamma_reconstruction=1.0, gamma_archetypal=1.0, gamma_extrema=1.0):
     loss = 0
     reconstruction_loss = 0
     archetypal_loss = 0
-    for batch_features, _ in data_loader:
-        # reshape mini-batch data to [N, 784] matrix
-        # load it to the active device
-        batch_features = batch_features.view(-1, 784).to(device)
+    extrema_loss = 0
+    
+    for idx, data in enumerate(data_loader):	
+        # if input is list, then data_loader contains features and target	
+        # in this case, assume first input is features based on data_loader structure	
+        if isinstance(data, list):	
+            batch_features = data[0]	
+        else:	
+            batch_features = data	
+        	
+        # if not using diffusion extrema, extrema=None
+        # else, add diffusion extrema to beginning of each extrema	
+        # first n_archetypes samples are used in extrema loss	
+        if extrema is not None:	
+            batch_features = torch.cat((extrema.view(-1, model.input_shape),	
+                                    batch_features.view(-1, model.input_shape)), 0)	
+            	
+        # reshape mini-batch data to [N, input_shape] matrix	
+        batch_features = batch_features.view(-1, model.input_shape)	
+        	
+        # load it to the active device	
+        batch_features = batch_features.to(model.device)
 
         # reset the gradients back to zero
         # PyTorch accumulates gradients on subsequent backward passes
         optimizer.zero_grad()
 
         # compute reconstructions
-        output, archetypal_embedding = model(batch_features)
+        output, archetypal_embedding = model(batch_features.float())
 
         # compute training reconstruction loss
         curr_reconstruction_loss = torch.mean((output - batch_features)**2)
@@ -83,6 +113,20 @@ def train_epoch(model, data_loader):
         # compute training archetypal loss
         curr_archetypal_loss = model.calc_archetypal_loss(archetypal_embedding)
         archetypal_loss += curr_archetypal_loss
+        
+        # compute training diffusion extrema loss	
+        if extrema is not None:	
+            curr_extrema_loss = model.calc_diffusion_extrema_loss(archetypal_embedding)	
+            extrema_loss += curr_extrema_loss	
+        else:	
+            curr_extrema_loss = 0	
+            extrema_loss = 0	
+            	
+        # extrema penalization decreases over batches and epochs	
+        # this enables AAnet to learn the correct archetypes if the diffusion extrema are not close	
+        train_loss = gamma_reconstruction * curr_reconstruction_loss + \	
+                     gamma_archetypal * curr_archetypal_loss + \	
+                     gamma_extrema /(epoch * len(data_loader) + (idx+1)) * curr_extrema_loss
 
         train_loss = curr_reconstruction_loss + curr_archetypal_loss
 
