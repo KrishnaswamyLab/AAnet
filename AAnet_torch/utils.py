@@ -68,7 +68,8 @@ def get_diffusion_extrema(data, diffusion_potential, n_archetypes, n_pcs=50):
         extrema_idx.append(np.argmin(data_pc[:,i]))	
         extrema_idx.append(np.argmax(data_pc[:,i]))	
         	
-    extrema = data[extrema_idx]	
+    # if odd number of archetypes, use argmin only from last component
+    extrema = data[extrema_idx[:n_archetypes]]	
     return extrema
 
 def train_epoch(model, data_loader, optimizer, epoch, extrema=None,	
