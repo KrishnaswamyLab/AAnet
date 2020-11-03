@@ -60,16 +60,20 @@ def _latlong_to_xyz(X, radius=1):
     #x3 = (x3 - R) / 10
     return np.vstack([x3, y3, z3]).T
 
-def get_diffusion_extrema(data, diffusion_potential, n_archetypes, n_pcs=50):	
-    pc_op = PCA(n_pcs)	
-    data_pc = pc_op.fit_transform(diffusion_potential)	
-    extrema_idx = []	
-    for i in range(int(np.ceil(n_archetypes/2.0))):	
-        extrema_idx.append(np.argmin(data_pc[:,i]))	
-        extrema_idx.append(np.argmax(data_pc[:,i]))	
-        	
-    # if odd number of archetypes, use argmin only from last component
-    extrema = data[extrema_idx[:n_archetypes]]	
+def get_diffusion_extrema(data, diffusion_potential, n_archetypes, n_pcs=50, random_state=42):
+    pc_op = PCA(n_pcs, random_state=random_state)
+    data_pc = pc_op.fit_transform(diffusion_potential)
+    extrema_idx = []
+    for i in range(n_pcs):
+        extrema_idx.append(np.argmin(data_pc[:,i]))
+        extrema_idx.append(np.argmax(data_pc[:,i]))
+
+    # return only unique extrema indexes in order of PCs
+    indexes = np.unique(extrema_idx, return_index=True)[1]
+    unique_extrema_idx = np.array([extrema_idx[index] for index in sorted(indexes)])
+        
+    # if odd number of archetypes, return minimum diffusion extrema first
+    extrema = data[unique_extrema_idx[:n_archetypes]]
     return extrema
 
 def train_epoch(model, data_loader, optimizer, epoch, extrema=None,	
