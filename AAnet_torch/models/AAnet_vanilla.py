@@ -17,6 +17,7 @@ class AAnet(BaseAAnet):
         activation_out="tanh",
         simplex_scale=1,
         device=None,
+        diffusion_extrema=None,
         **kwargs
     ):
         super().__init__()
@@ -26,10 +27,13 @@ class AAnet(BaseAAnet):
         self.layer_widths = layer_widths
         self.activation_out = activation_out
         self.simplex_scale = simplex_scale
+        self.diffusion_extrema = diffusion_extrema
+        
         if device is None:
             self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         else:
             self.device = device
+            
 
         self.encoder_layers = []
         # Instantiate encoder
