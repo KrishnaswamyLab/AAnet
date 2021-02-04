@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.manifold import MDS
 import matplotlib.pyplot as plt
 import torch
+import warnings
 
 def plot_latent_space(model, data, c=None, ax=None):
     '''Method for visualizing the latent archetypal space. Algorithm is:
@@ -21,6 +22,13 @@ def plot_latent_space(model, data, c=None, ax=None):
     # Get archetypes in feature space
     archetypes_features = model.get_archetypes_data().detach().numpy()
     embedding = MDS(n_components=2)
+
+    #Filter MDS warning
+    message =  "The MDS API has changed. ``fit`` now constructs an" \
+               " dissimilarity matrix from data. To use a custom " \
+               "dissimilarity matrix, set " \
+               "``dissimilarity='precomputed'``."
+    warnings.filterwarnings("ignore", message=message)
     archetypes_MDS = embedding.fit_transform(archetypes_features)
 
     # Linearly interpolate between the archetypal coordiantes
@@ -38,7 +46,7 @@ def plot_latent_space(model, data, c=None, ax=None):
     for i in range(archetypes_MDS.shape[0]):
         ax.text(archetypes_MDS[i,0],
                 archetypes_MDS[i,1],
-                i+1,
+                '{}'.format(i+1),
                 horizontalalignment='center',
                 verticalalignment='center',
                 fontdict={'color': 'white','size':10,'weight':'bold'},

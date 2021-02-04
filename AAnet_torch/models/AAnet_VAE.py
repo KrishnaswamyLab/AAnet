@@ -157,7 +157,6 @@ class AAnet_VAE(BaseAAnet):
         mu = args[2]
         log_var = args[3]
 
-        #TODO what's up with this M_N?
         kld_weight = kwargs['M_N'] # Account for the minibatch samples from the dataset
         recons_loss = F.mse_loss(recons, input)
 
