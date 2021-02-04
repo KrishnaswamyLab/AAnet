@@ -91,3 +91,11 @@ class BaseAAnet(nn.Module):
         '''
         X_bary = self.euclidean_to_barycentric(archetypal_embedding)
         return torch.mean(self.dist_to_simplex(X_bary) ** 2)
+    
+    def calc_diffusion_extrema_loss(self, archetypal_embedding):
+        '''
+        Returns MSE diffusion extrema loss (minimize MSE between diffusion extrema and archetypes)
+        Diffusion extrema are concatenated to the beginning of each batch as first n_archetypes samples
+        '''
+        X_bary = self.euclidean_to_barycentric(archetypal_embedding)
+        return torch.mean((X_bary[:self.n_archetypes,:] - torch.eye(self.n_archetypes)) ** 2)
