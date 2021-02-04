@@ -145,7 +145,7 @@ class AAnet(nn.Module):
             for j in range(X.shape[1]):
                 T[i,j] = simplex[i,j] - simplex[-1,j]
 
-        T_inv =  torch.inverse(T).type(torch.double).to(self.device)
+        T_inv =  torch.inverse(T).type(torch.float32).to(self.device)
         X_bary = torch.einsum('ij,bj->bi', T_inv, X - simplex[-1]).to(self.device)
         X_bary = torch.cat([X_bary, (1-torch.sum(X_bary, axis=1, keepdim=True))], axis=1).to(self.device)
         return X_bary
@@ -162,7 +162,7 @@ class AAnet(nn.Module):
         return torch.sum(
                  torch.where((X_bary < 0),
                    torch.abs(X_bary),
-                   torch.zeros(X_bary.shape, dtype=torch.double).to(self.device)
+                   torch.zeros(X_bary.shape, dtype=torch.float32).to(self.device)
                    ),
                  axis=1).to(self.device)
 
@@ -345,7 +345,7 @@ class VAAnet(nn.Module):
             for j in range(X.shape[1]):
                 T[i,j] = simplex[i,j] - simplex[-1,j]
 
-        T_inv =  torch.inverse(T).type(torch.double).to(self.device)
+        T_inv =  torch.inverse(T).type(torch.float32).to(self.device)
         X_bary = torch.einsum('ij,bj->bi', T_inv, X - simplex[-1]).to(self.device)
         X_bary = torch.cat([X_bary, (1-torch.sum(X_bary, axis=1, keepdim=True))], axis=1).to(self.device)
         return X_bary
@@ -362,7 +362,7 @@ class VAAnet(nn.Module):
         return torch.sum(
                  torch.where((X_bary < 0),
                    torch.abs(X_bary),
-                   torch.zeros(X_bary.shape, dtype=torch.double).to(self.device)
+                   torch.zeros(X_bary.shape, dtype=torch.float32).to(self.device)
                    ),
                  axis=1).to(self.device)
 

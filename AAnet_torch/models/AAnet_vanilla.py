@@ -2,12 +2,13 @@ import torch
 from torch import nn, optim
 import numpy as np
 import sklearn
+from torch.nn import functional as F
 
 from . import BaseAAnet
 
 
 
-class AAnet(BaseAAnet):
+class AAnet_vanilla(BaseAAnet):
     def __init__(
         self,
         input_shape,
@@ -102,9 +103,9 @@ class AAnet(BaseAAnet):
         activation = self.decoder_layers[-1](activation)
         return activation
 
-    def forward(self, features):
+    def forward(self, input):
         # Encode data
-        activation = self.encode(features)
+        activation = self.encode(input)
 
         # Save archetypal_embedding
         archetypal_embedding = activation.clone()
@@ -114,5 +115,28 @@ class AAnet(BaseAAnet):
             activation += torch.normal(mean=0., std=self.noise, size=activation.shape)
 
         # Decode embedding
-        reconstructed = self.decode(activation)
-        return reconstructed, archetypal_embedding
+        return self.decode(activation), input, archetypal_embedding
+
+    def loss_function(self,
+                      *args,
+                      **kwargs) -> dict:
+        """
+        Computes the VAE loss function.
+        KL(N(\mu, \sigma), N(0, 1)) = \log \frac{1}{\sigma} + \frac{\sigma^2 + \mu^2}{2} - \frac{1}{2}
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        recons = args[0]
+        input = args[1]
+        mu = args[2]
+
+
+        recons_loss = F.mse_loss(recons, input)
+
+        archetypal_loss = self.calc_archetypal_loss(mu)
+
+        loss = recons_loss + self.archetypal_weight * archetypal_loss
+
+        return {'loss': loss, 'Reconstruction_Loss':recons_loss,
+                'KLD': kld_loss, 'Archetypal_Loss':archetypal_loss}
