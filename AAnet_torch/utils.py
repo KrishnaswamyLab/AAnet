@@ -1,6 +1,9 @@
 import numpy as np
 import torch
 from sklearn.decomposition import PCA, TruncatedSVD
+import networkx as nx
+import graphtools as gt
+import scipy
 
 def train_epoch(model, data_loader, optimizer, epoch, gamma_reconstruction=1.0, gamma_archetypal=1.0, gamma_extrema=1.0):
     loss = 0
@@ -72,3 +75,47 @@ def train_epoch(model, data_loader, optimizer, epoch, gamma_reconstruction=1.0, 
     reconstruction_loss = reconstruction_loss / len(data_loader)
     archetypal_loss = archetypal_loss / len(data_loader)
     return loss, reconstruction_loss, archetypal_loss
+
+def get_fiedler_extrema(data, n_extrema, knn=10):
+    '''
+    Finds the 'Laplacian extrema' of a dataset.  The first extrema is chosen as
+    the point that minimizes the first non-trivial eigenvalue of the Laplacian graph
+    on the data.  Subsequent extrema are chosen by first finding the unique non-trivial
+    non-negative vector that is zero on all previous extrema while at the same time
+    minimizing the Laplacian quadratic form, then taking the argmax of this vector.
+    '''
+
+    G = gt.Graph(data, use_pygsp=True, decay=None, knn)
+   
+    # We need to convert G into a NetworkX graph to use the Tracemin PCG algorithm 
+    G_nx = nx.convert_matrix.from_scipy_sparse_matrix(G.W)
+    fiedler = nx.linalg.algebraicconnectivity.fiedler_vector(G_nx, method='tracemin_pcg')
+
+    # Combinatorial Laplacian gives better results than the normalized Laplacian
+    L = nx.laplacian_matrix(G_nx)
+    first_extrema = np.argmax(fiedler)
+    extrema = [first_extrema]
+    extrema_ordered = [first_extrema]
+
+    init_lanczos = fiedler
+    init_lanczos = np.delete(init_lanczos, first_extrema)
+    for i in range(n_extrema - 1):
+        # Generate the Laplacian submatrix by removing rows/cols for previous extrema
+        indices = range(data.shape[0])
+        indices = np.delete(indices, extrema)
+        ixgrid = np.ix_(indices, indices)
+        L_sub = L[ixgrid] 
+
+        # Find the smallest eigenvector of our Laplacian submatrix
+        eigvals, eigvecs = scipy.sparse.linalg.eigsh(L_sub, k=1, which='SM', v0=init_lanczos)
+
+        # Add it to the sorted and unsorted lists of extrema
+        new_extrema = np.argmax(np.abs(eigvecs[:,0]))
+        init_lanczos = eigvecs[:,0]
+        init_lanczos = np.delete(init_lanczos, new_extrema)
+        shift = np.searchsorted(extrema_ordered, new_extrema)
+        extrema_ordered.insert(shift, new_extrema + shift)
+        extrema.append(new_extrema)
+
+    return extrema
+
