@@ -76,7 +76,7 @@ def train_epoch(model, data_loader, optimizer, epoch, gamma_reconstruction=1.0, 
     archetypal_loss = archetypal_loss / len(data_loader)
     return loss, reconstruction_loss, archetypal_loss
 
-def get_fiedler_extrema(data, n_extrema, knn=10):
+def get_laplacian_extrema(data, n_extrema, knn=10):
     '''
     Finds the 'Laplacian extrema' of a dataset.  The first extrema is chosen as
     the point that minimizes the first non-trivial eigenvalue of the Laplacian graph
@@ -115,7 +115,7 @@ def get_fiedler_extrema(data, n_extrema, knn=10):
         init_lanczos = np.delete(init_lanczos, new_extrema)
         shift = np.searchsorted(extrema_ordered, new_extrema)
         extrema_ordered.insert(shift, new_extrema + shift)
-        extrema.append(new_extrema)
+        extrema.append(new_extrema + shift)
 
     return extrema
 
