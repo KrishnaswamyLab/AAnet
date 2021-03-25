@@ -37,7 +37,7 @@ def train_epoch(model, data_loader, optimizer, epoch, gamma_reconstruction=1.0, 
         optimizer.zero_grad()
 
         # compute reconstructions
-        output, archetypal_embedding = model(batch_features.float())
+        output, _input, archetypal_embedding = model(batch_features.float())
 
         # compute training reconstruction loss
         curr_reconstruction_loss = torch.mean((output - batch_features)**2)
@@ -85,7 +85,7 @@ def get_laplacian_extrema(data, n_extrema, knn=10):
     minimizing the Laplacian quadratic form, then taking the argmax of this vector.
     '''
 
-    G = gt.Graph(data, use_pygsp=True, decay=None, knn)
+    G = gt.Graph(data, use_pygsp=True, decay=None, knn=knn)
    
     # We need to convert G into a NetworkX graph to use the Tracemin PCG algorithm 
     G_nx = nx.convert_matrix.from_scipy_sparse_matrix(G.W)
