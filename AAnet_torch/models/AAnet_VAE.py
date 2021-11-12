@@ -25,6 +25,7 @@ class AAnet_VAE(BaseAAnet):
         archetypal_weight: float = 1,
         kl_loss: str = "partial",
         device: str = None,
+        diffusion_extrema=None,
         **kwargs
     ) -> None:
         super(AAnet_VAE, self).__init__()
@@ -36,6 +37,7 @@ class AAnet_VAE(BaseAAnet):
         self.simplex_scale = simplex_scale
         self.archetypal_weight = archetypal_weight
         self.kl_loss = kl_loss
+        self.diffusion_extrema = diffusion_extrema
         if device is None:
             self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         else:
