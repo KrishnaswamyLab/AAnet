@@ -37,7 +37,7 @@ def train_epoch(model, data_loader, optimizer, epoch, gamma_reconstruction=1.0, 
         optimizer.zero_grad()
 
         # compute reconstructions
-        output, _input, archetypal_embedding = model(batch_features.float())
+        output, _in, archetypal_embedding = model(batch_features.float())
 
         # compute training reconstruction loss
         curr_reconstruction_loss = torch.mean((output - batch_features)**2)
@@ -76,7 +76,7 @@ def train_epoch(model, data_loader, optimizer, epoch, gamma_reconstruction=1.0, 
     archetypal_loss = archetypal_loss / len(data_loader)
     return loss, reconstruction_loss, archetypal_loss
 
-def get_laplacian_extrema(data, n_extrema, knn=10):
+def get_laplacian_extrema(data, n_extrema, knn=10, subsample=True):
     '''
     Finds the 'Laplacian extrema' of a dataset.  The first extrema is chosen as
     the point that minimizes the first non-trivial eigenvalue of the Laplacian graph
@@ -84,7 +84,9 @@ def get_laplacian_extrema(data, n_extrema, knn=10):
     non-negative vector that is zero on all previous extrema while at the same time
     minimizing the Laplacian quadratic form, then taking the argmax of this vector.
     '''
-
+    
+    if subsample and data.shape[0] > 10000:
+        data = data[np.random.choice(data.shape[0], 10000, replace=False), :]
     G = gt.Graph(data, use_pygsp=True, decay=None, knn=knn)
    
     # We need to convert G into a NetworkX graph to use the Tracemin PCG algorithm 
