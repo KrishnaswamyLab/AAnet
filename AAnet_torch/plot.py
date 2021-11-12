@@ -15,7 +15,7 @@ def plot_latent_space(model, data, c=None, ax=None):
     interpolation approach is faster and yeilds similar results.'''
 
         # Encode the data into the latent space
-    data_latent, _ = model.encode(torch.Tensor(data).type(torch.float))
+    data_latent = model.encode(torch.Tensor(data).type(torch.float))
     # Translate to barycentric coordinates
     data_barycentric = model.euclidean_to_barycentric(data_latent).detach().numpy()
 
