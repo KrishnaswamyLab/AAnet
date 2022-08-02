@@ -2,7 +2,7 @@
 
 ## Quick start
 
-* [Guided tutorial in Python](https://nbviewer.jupyter.org/github/KrishnaswamyLab/AAnet/blob/master/notebooks/AAnet_tutorial_MNIST.ipynb)
+* [Guided tutorial in Python](https://nbviewer.jupyter.org/github/KrishnaswamyLab/AAnet/blob/master/AAnet_torch/simulated_data_example/AAnet_vs_other_methods_on_tetrahedron.ipynb)
 
 
 ## Introduction
@@ -19,23 +19,9 @@ Archetypal analysis is a data decomposition method that describes each observati
 
 Currently, AAnet is not a full Python package, but all of the code you need to run the algorithm is in this repo. For convenience, we've organized code into folders for AAnet proper and for other algorithms to which we compared AAnet in our manuscript.
 
+The most updated version of AAnet (08/01/2022) is implemented in torch. 
+
 ### File list
-
-`AAnet code/`
-* `AAnet.py` - Python implementation of AAnet. Requires `network.py`
-* `AAtools.py` - Plotting functions that are helpful when running AAnet
-* `network.py` - Base code for an AE encoder and decoder
-
-`comparison_code/` - Code for running all AA methods and for rerunning the dSprites experiment
-* `run_comparisons.py` - Includes a method, runAA, for running at AA methods in the paper
-* `image_translation_comparisons.py` - Generates data for dSprites comparison and runs all 6 methods. Includes functions for saving and visualizing results in Fig. 4.2.
-* `furthest_sum.py` - Helper function for Javadi et al.
-* `Javadi.py` - We had to manually convert the Javadi et al. method to Python3.
-* `PCHA.py` - Obtained from https://github.com/ulfaslak/py_pcha
-
-`notebooks/` - Contains Jupyter notebook tutorial(s)
-* `AAnet_tutorial_MNIST.ipynb` - A Jupyter notebook with a tutorial for running AAnet
-
-### Getting help
-
-If you have any questions about AAnet, please feel free to raise an Issue on GitHub. This will be the fastest way to get help. You can also email David (david.vandijk@yale.edu) or Daniel (daniel.burkhardt@yale.edu) with specific questions.
+* `AAnet_torch/models`- Includes most recent iteration of AAnet model
+* `AAnet_torch/data` - Includes helper functions for generating curved simplices for testing
+* `AAnet_torch/simulated_data_example` - Includes Jupyter notebook and helper functiosn to run AAnet
