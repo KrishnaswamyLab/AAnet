@@ -11,7 +11,7 @@ AAnet is a tool for scalable Archetypal Analysis of large and potentially non-li
 
 [D. van Dijk, D. Burkhardt, et al. Finding Archetypal Spaces for Data Using Neural Networks. 2019. arXiv](https://arxiv.org/abs/1901.09078)
 
-![alt text](https://github.com/KrishnaswamyLab/AAnet/blob/master/img/AAnet.png)
+![alt text](https://github.com/KrishnaswamyLab/AAnet/blob/master/AAnet.png)
 
 Archetypal analysis is a data decomposition method that describes each observation in a dataset as a convex combination of "pure types" or archetypes. Existing methods for archetypal analysis work well when a linear relationship exists between the feature space and the archetypal space. However, such methods are not applicable to systems where the feature space is generated non-linearly from the combination of archetypes, such as in biological systems or image transformations. Here, we propose a reformulation of the problem such that the goal is to learn a non-linear transformation of the data into a latent archetypal space. To solve this problem, we introduce Archetypal Analysis network (AAnet), which is a deep neural network framework for learning and generating from a latent archetypal representation of data. We demonstrate state-of-the-art recovery of ground-truth archetypes in non-linear data domains, show AAnet can generative from data geometry rather than from data density, and use AAnet to identify biologically meaningful archetypes in single-cell gene expression data.
 
