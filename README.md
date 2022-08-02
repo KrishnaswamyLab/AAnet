@@ -7,7 +7,7 @@
 
 ## Introduction
 
-AAnet is a tool for scalable Archetypal Analysis of large and potentially non-linear datasets. A full description of the algorithm is available in our preprint on ArXiv.
+AAnet is a tool for scalable Archetypal Analysis of large and potentially non-linear datasets. A full description of the algorithm is available in our manuscript on ArXiv.
 
 [D. van Dijk, D. Burkhardt, et al. Finding Archetypal Spaces for Data Using Neural Networks. 2019. arXiv](https://arxiv.org/abs/1901.09078)
 
