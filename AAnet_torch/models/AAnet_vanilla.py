@@ -3,10 +3,8 @@ from torch import nn, optim
 import numpy as np
 import sklearn
 from torch.nn import functional as F
-
+from typing import Tuple
 from . import BaseAAnet
-
-
 
 class AAnet_vanilla(BaseAAnet):
     def __init__(
@@ -19,7 +17,6 @@ class AAnet_vanilla(BaseAAnet):
         simplex_scale=1,
         device=None,
         diffusion_extrema=None,
-        archetypal_weight=1,
         **kwargs
     ):
         super().__init__()
@@ -30,7 +27,6 @@ class AAnet_vanilla(BaseAAnet):
         self.activation_out = activation_out
         self.simplex_scale = simplex_scale
         self.diffusion_extrema = diffusion_extrema
-        self.archetypal_weight = archetypal_weight
         
         if device is None:
             self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -104,8 +100,8 @@ class AAnet_vanilla(BaseAAnet):
         # Final layer no activation
         activation = self.decoder_layers[-1](activation)
         return activation
-
-    def forward(self, input) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    
+    def forward(self, input) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         '''
             Returns:
                 recons: reconstructed data
@@ -124,28 +120,3 @@ class AAnet_vanilla(BaseAAnet):
 
         # Decode embedding
         return self.decode(activation), input, archetypal_embedding
-
-    def loss_function(self,
-                      recons,
-                      input,
-                      archetypal_embedding,
-                      mu=None,
-                      **kwargs) -> dict:
-        """
-        Computes the VAE loss function.
-        KL(N(\mu, \sigma), N(0, 1)) = \log \frac{1}{\sigma} + \frac{\sigma^2 + \mu^2}{2} - \frac{1}{2}
-        :param args:
-        :param kwargs:
-        :return:
-        """
-        recons_loss = F.mse_loss(recons, input)
-
-        archetypal_loss = self.calc_archetypal_loss(archetypal_embedding)
-
-        loss = recons_loss + self.archetypal_weight * archetypal_loss
-
-        # TODO:KL divergence loss
-        kld_loss = 0
-
-        return {'loss': loss, 'Reconstruction_Loss':recons_loss,
-                'KLD': kld_loss, 'Archetypal_Loss':archetypal_loss}

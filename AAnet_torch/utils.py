@@ -90,7 +90,7 @@ def get_laplacian_extrema(data, n_extrema, knn=10, subsample=True):
     G = gt.Graph(data, use_pygsp=True, decay=None, knn=knn)
    
     # We need to convert G into a NetworkX graph to use the Tracemin PCG algorithm 
-    G_nx = nx.convert_matrix.from_scipy_sparse_matrix(G.W)
+    G_nx = nx.convert_matrix.from_scipy_sparse_array(G.W)
     fiedler = nx.linalg.algebraicconnectivity.fiedler_vector(G_nx, method='tracemin_pcg')
 
     # Combinatorial Laplacian gives better results than the normalized Laplacian

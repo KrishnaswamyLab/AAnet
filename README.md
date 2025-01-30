@@ -2,26 +2,14 @@
 
 ## Quick start
 
-* [Guided tutorial in Python](https://nbviewer.jupyter.org/github/KrishnaswamyLab/AAnet/blob/master/AAnet_torch/simulated_data_example/AAnet_vs_other_methods_on_tetrahedron.ipynb)
-
+* [Guided tutorial for single-cell analysis](example_notebooks/AAnet_single-cell_example.ipynb)
+* [Guided tutorial for simulated simplex](example_notebooks/AAnet_simplex_example.ipynb)
+* [Guided tutorial for MNIST digits](example_notebooks/AAnet_MNIST_exxample.ipynb)
 
 ## Introduction
 
-AAnet is a tool for scalable Archetypal Analysis of large and potentially non-linear datasets. A full description of the algorithm is available in our manuscript on ArXiv.
+[A. Venkat, S. E. Youlten, B. P. San Juan, et al. AAnet resolves a continuum of spatially-localized cell states to unveil tumor complexity. 2024. bioRxiv](https://www.biorxiv.org/content/10.1101/2024.05.11.593705v1.full)
 
-[D. van Dijk, D. Burkhardt, et al. Finding Archetypal Spaces for Data Using Neural Networks. 2019. arXiv](https://arxiv.org/abs/1901.09078)
+![Experimental Overview](1_experimental_overview.png)
 
-![alt text](https://github.com/KrishnaswamyLab/AAnet/blob/master/AAnet.png)
-
-Archetypal analysis is a data decomposition method that describes each observation in a dataset as a convex combination of "pure types" or archetypes. Existing methods for archetypal analysis work well when a linear relationship exists between the feature space and the archetypal space. However, such methods are not applicable to systems where the feature space is generated non-linearly from the combination of archetypes, such as in biological systems or image transformations. Here, we propose a reformulation of the problem such that the goal is to learn a non-linear transformation of the data into a latent archetypal space. To solve this problem, we introduce Archetypal Analysis network (AAnet), which is a deep neural network framework for learning and generating from a latent archetypal representation of data. We demonstrate state-of-the-art recovery of ground-truth archetypes in non-linear data domains, show AAnet can generative from data geometry rather than from data density, and use AAnet to identify biologically meaningful archetypes in single-cell gene expression data.
-
-## Using this repository
-
-Currently, AAnet is not a full Python package, but all of the code you need to run the algorithm is in this repo. For convenience, we've organized code into folders for AAnet proper and for other algorithms to which we compared AAnet in our manuscript.
-
-The most updated version of AAnet (08/01/2022) is implemented in torch. 
-
-### File list
-* `AAnet_torch/models`- Includes most recent iteration of AAnet model
-* `AAnet_torch/data` - Includes helper functions for generating curved simplices for testing
-* `AAnet_torch/simulated_data_example` - Includes Jupyter notebook and helper functiosn to run AAnet
+Identifying functionally important cell states and structure within a heterogeneous tumor remains a significant biological and computational challenge. Moreover, current clustering or trajectory-based computational models are ill-equipped to address the notion that cancer cells reside along a phenotypic continuum. To address this, we present Archetypal Analysis network (AAnet), a neural network that learns key archetypal cell states within a phenotypic continuum of cell states in single-cell data.
