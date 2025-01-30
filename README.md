@@ -4,7 +4,7 @@
 
 * [Guided tutorial for single-cell analysis](example_notebooks/AAnet_single-cell_example.ipynb)
 * [Guided tutorial for simulated simplex](example_notebooks/AAnet_simplex_example.ipynb)
-* [Guided tutorial for MNIST digits](example_notebooks/AAnet_MNIST_exxample.ipynb)
+* [Guided tutorial for MNIST digits](example_notebooks/AAnet_MNIST_example.ipynb)
 
 ## Introduction
 
